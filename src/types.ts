@@ -37,4 +37,5 @@ export interface CompressOptions {
   gzipLevel?: GzipLevel
   options?: NodeCompressionOptions
   filter?: CompressionFilter
+  compressibleTypes?: string[]
 }

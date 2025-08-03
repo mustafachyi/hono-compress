@@ -11,8 +11,12 @@ export class ZstdCompressionStream extends TransformStream<Uint8Array, Uint8Arra
   constructor(level?: number) {
     super({
       async transform(chunk, controller) {
-        const compressedChunk = await zstd.compress(Buffer.from(chunk), level)
-        controller.enqueue(compressedChunk)
+        try {
+          const compressedChunk = await zstd.compress(Buffer.from(chunk), level)
+          controller.enqueue(compressedChunk)
+        } catch (error) {
+          controller.error(error)
+        }
       },
     })
   }
@@ -34,19 +38,27 @@ export class BrotliCompressionStream {
     
     this.writable = new WritableStream({
       write(chunk: Uint8Array) {
-        const compressed = compressor.compress(
-          chunk,
-          (brotli as any).BrotliStreamResultCode.NeedsMoreInput,
-        )
-        if (compressed) controller.enqueue(compressed)
+        try {
+          const compressed = compressor.compress(
+            chunk,
+            (brotli as any).BrotliStreamResultCode.NeedsMoreInput,
+          )
+          if (compressed) controller.enqueue(compressed)
+        } catch (error) {
+          controller.error(error)
+        }
       },
       close() {
-        const final = compressor.compress(
-          new Uint8Array(0),
-          (brotli as any).BrotliStreamResultCode.Finished,
-        )
-        if (final) controller.enqueue(final)
-        controller.close()
+        try {
+          const final = compressor.compress(
+            new Uint8Array(0),
+            (brotli as any).BrotliStreamResultCode.Finished,
+          )
+          if (final) controller.enqueue(final)
+          controller.close()
+        } catch (error) {
+          controller.error(error)
+        }
       },
     })
   }

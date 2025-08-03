@@ -76,6 +76,7 @@ function shouldSkipCompression(
   threshold: number,
   force: boolean,
   filter: any,
+  compressibleTypes: string[],
 ): boolean {
   if (!context.res.body || context.req.method === 'HEAD') return true
   if (context.res.headers.has('Content-Encoding')) return true
@@ -84,7 +85,7 @@ function shouldSkipCompression(
   if (contentLength > 0 && contentLength < threshold) return true
   
   return (
-    !isCompressible(context.res, force) ||
+    !isCompressible(context.res, force, compressibleTypes) ||
     !isTransformable(context.res) ||
     !!context.req.header('x-no-compression') ||
     (filter ? !filter(context) : isDenoDeploy || isCloudflareWorkers)
@@ -101,6 +102,7 @@ export function compress({
   gzipLevel = GZIP_DEFAULT_LEVEL,
   options = {},
   filter,
+  compressibleTypes = [],
 }: CompressOptions = {}): MiddlewareHandler {
   const activeEncodings = encoding ? [encoding] : encodings
   validateEncodings(activeEncodings)
@@ -108,7 +110,7 @@ export function compress({
   return async function compressionMiddleware(context, next) {
     await next()
 
-    if (shouldSkipCompression(context, threshold, force, filter)) return
+    if (shouldSkipCompression(context, threshold, force, filter, compressibleTypes)) return
 
     const matchedEncoding =
       findMatchingEncoding(context, activeEncodings) ?? (force ? activeEncodings[0] : null)
@@ -125,11 +127,16 @@ export function compress({
 
     if (!stream) return
 
-    context.res = isTransformStream
-      ? new Response(context.res.body!.pipeThrough(stream as TransformStream), context.res)
-      : await context.res.body!.pipeTo(stream.writable).then(() => new Response(stream.readable, context.res))
+    try {
+      context.res = isTransformStream
+        ? new Response(context.res.body!.pipeThrough(stream as TransformStream), context.res)
+        : await context.res.body!.pipeTo(stream.writable).then(() => new Response(stream.readable, context.res))
 
-    context.res.headers.delete('Content-Length')
-    context.res.headers.set('Content-Encoding', matchedEncoding)
+      context.res.headers.delete('Content-Length')
+      context.res.headers.set('Content-Encoding', matchedEncoding)
+    } catch (error) {
+      console.warn('Compression failed:', error)
+      return
+    }
   }
 }

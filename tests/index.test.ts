@@ -145,7 +145,7 @@ describe('Compression Middleware', () => {
       expect(response.headers.get('Content-Type')).toStartWith('application/json')
     })
 
-    it('should not compress non-compressible types like images', async () => {
+    it('should not compress non-compressible types like images by default', async () => {
       const app = new Hono().use(compress())
       app.get('/', async (c) =>
         c.body(await Bun.file('tests/mei.jpg').arrayBuffer(), 200, {
@@ -155,6 +155,22 @@ describe('Compression Middleware', () => {
       const response = await app.request(createRequest('deflate'))
       expect(response.headers.get('Content-Encoding')).toBe(null)
       expect(response.headers.get('Content-Type')).toBe('image/jpeg')
+    })
+
+    it('should compress custom compressible types when specified', async () => {
+      const app = new Hono().use(
+        compress({
+          compressibleTypes: ['application/protobuf'],
+        }),
+      )
+      app.get('/', (c) =>
+        c.body(TEXT_BODY, 200, {
+          'Content-Type': 'application/protobuf',
+        }),
+      )
+      const response = await app.request(createRequest('br'))
+      expect(response.headers.get('Content-Encoding')).toBe('br')
+      expect(response.headers.get('Content-Type')).toBe('application/protobuf')
     })
   })
 })

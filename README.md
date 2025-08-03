@@ -24,7 +24,7 @@ app.use('*', compress())
 
 app.get('/', (c) => c.text('Hello World!'))
 
-export default ap
+export default app
 ```
 
 ## Encoding Selection
@@ -56,6 +56,9 @@ app.use('*', compress({
   // Set the minimum response body size in bytes to be eligible for compression.
   threshold: 1024,
 
+  // An array of additional MIME types to consider for compression.
+  compressibleTypes: ['application/protobuf', 'application/xml'],
+
   // Compression level for zstd (1-22).
   zstdLevel: 2,
 
@@ -81,7 +84,7 @@ Compression is automatically bypassed under the following conditions:
 *   The `x-no-compression` header is present on the request.
 *   The `Cache-Control` header contains the `no-transform` directive.
 *   The response body size is smaller than the configured `threshold`.
-*   The `Content-Type` is not typically compressible (e.g., `image/*`, `video/*`).
+*   The `Content-Type` is not typically compressible (e.g., `image/*`, `video/*`) and is not included in the `compressibleTypes` option.
 *   The request method is `HEAD`.
 
 ## Runtime Compatibility
@@ -104,6 +107,7 @@ Compression is automatically bypassed under the following conditions:
 | `encoding`  | `CompressionEncoding`        | `undefined`                         | Force a specific encoding algorithm.                   |
 | `encodings` | `CompressionEncoding[]`      | `['zstd', 'br', 'gzip', 'deflate']` | Allowed algorithms in order of preference.             |
 | `threshold` | `number`                     | `1024`                              | Minimum response size in bytes to compress.            |
+| `compressibleTypes` | `string[]`           | `[]`                                | An array of additional MIME types to consider compressible. |
 | `zstdLevel` | `number`                     | `2`                                 | Zstandard compression level (1-22).                    |
 | `brotliLevel` | `number`                     | `4`                                 | Brotli compression level (1-11).                       |
 | `gzipLevel` | `number`                     | `6`                                 | Gzip compression level (0-9).                          |
@@ -120,6 +124,7 @@ interface CompressOptions {
   encoding?: CompressionEncoding
   encodings?: CompressionEncoding[]
   threshold?: number
+  compressibleTypes?: string[]
   zstdLevel?: number
   brotliLevel?: number
   gzipLevel?: number

@@ -1,7 +1,7 @@
 {
   "name": "hono-compress-experimental",
   "type": "module",
-  "version": "0.7.0-experimental.1",
+  "version": "0.7.0-experimental.2",
   "description": "Experimental compression plugin for Hono working with Bun (forked and modified)",
   "author": {
     "name": "mustafachyi",
