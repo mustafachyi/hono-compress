@@ -12,19 +12,27 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
   ...markdown.configs.recommended,
   unicorn.configs['flat/recommended'],
   regexp.configs['flat/recommended'],
   importX.flatConfigs.recommended,
-  importX.flatConfigs.typescript,
   perfectionist.configs['recommended-natural'],
   security.configs.recommended,
   sonarjs.configs.recommended,
   prettier,
   { ignores: ['dist', 'README.md'] },
-  { plugins: { tsdoc } },
+  
+  // TypeScript-specific configuration
   {
+    extends: [...tseslint.configs.recommended, importX.flatConfigs.typescript],
+    files: ['**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.eslint.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    plugins: { tsdoc },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
@@ -46,8 +54,15 @@ export default tseslint.config(
       'unicorn/prefer-top-level-await': 'off',
       'unicorn/prevent-abbreviations': 'off',
     },
-  },
-  {
     settings: { 'import-x/resolver': { typescript: true } },
+  },
+  
+  // JavaScript config files - no TypeScript project required
+  {
+    files: ['**/*.config.js'],
+    rules: {
+      'unicorn/filename-case': 'off',
+      'unicorn/prefer-module': 'off',
+    },
   },
 )

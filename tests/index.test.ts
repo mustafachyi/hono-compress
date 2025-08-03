@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 import { type Context, Hono } from 'hono'
 
-import type { CompressionEncoding } from '~/types'
+import type { CompressionEncoding } from '../src/types'
 
-import { compress } from '~/middleware'
+import { compress } from '../src/middleware'
 
 const TEXT_BODY = `
 もしも願いが一つ叶うなら

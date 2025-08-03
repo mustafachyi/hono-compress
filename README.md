@@ -1,195 +1,136 @@
-# hono-compress
+# hono-compress-experimental
 
-Compression plugin for [Hono](https://github.com/honojs/hono)
+A compression middleware for Hono, supporting zstd, brotli, gzip, and deflate. Designed for Bun, Node.js, Deno, and Cloud-based runtimes.
 
-Drop-in replacement of the built-in [Compress Middleware](https://hono.dev/docs/middleware/builtin/compress), but with some extra...
-
-### Features
-
-- all available compression formats (`zstd`, `brotli`, `gzip`, `deflate`)
-- ultra-fast and 100% type-safe ✨
-- best format auto-selection
-- streaming response support
-- configurable compression level and zlib options
-- double-compressed content protection
-- content size threshold and custom filtering
-- Cloudflare Workers and Deno Deploy runtime detection
-- works with [Node](https://nodejs.org/), [Deno](https://deno.com/) and [Bun](https://bun.sh/)
-
-Leave a star on GitHub if you like it 🙏
+[![npm version](https://badge.fury.io/js/hono-compress-experimental.svg)](https://www.npmjs.com/package/hono-compress-experimental)
 
 ## Installation
 
-<details open>
-<summary>npm</summary>
-
 ```bash
-npm install hono-compress
+npm install hono-compress-experimental
 ```
 
-</details>
+## Basic Usage
 
-<details>
-<summary>Yarn</summary>
-
-```bash
-yarn add hono-compress
-```
-
-</details>
-
-<details>
-<summary>pnpm</summary>
-
-```bash
-pnpm add hono-compress
-```
-
-</details>
-
-<details>
-<summary>Bun</summary>
-
-```bash
-bun add hono-compress
-```
-
-</details>
-
-<details>
-<summary>Deno</summary>
-
-```bash
-deno add hono-compress
-```
-
-</details>
-
-## Usage
+The following example enables automatic response compression for all routes.
 
 ```typescript
 import { Hono } from 'hono'
-import { compress } from 'hono-compress'
+import { compress } from 'hono-compress-experimental'
 
 const app = new Hono()
 
-app.use(compress())
+app.use('*', compress())
+
+app.get('/', (c) => c.text('Hello World!'))
+
+export default ap
 ```
+
+## Encoding Selection
+
+The middleware automatically negotiates the most effective encoding based on the client's `Accept-Encoding` header. The default evaluation priority is:
+
+1.  `zstd`
+2.  `brotli`
+3.  `gzip`
+4.  `deflate`
 
 ## Configuration
 
+The `compress` middleware can be configured by passing an options object.
+
 ```typescript
-compress({
-  encoding,
-  encodings,
-  force,
-  threshold,
-  zstdLevel,
-  brotliLevel,
-  gzipLevel,
-  options,
-  filter,
-})
+import { Hono } from 'hono'
+import { compress } from 'hono-compress-experimental'
+
+const app = new Hono()
+
+app.use('*', compress({
+  // Force a specific encoding, ignoring the Accept-Encoding header.
+  encoding: 'gzip',
+
+  // Define the priority and availability of encodings.
+  encodings: ['br', 'gzip'],
+
+  // Set the minimum response body size in bytes to be eligible for compression.
+  threshold: 1024,
+
+  // Compression level for zstd (1-22).
+  zstdLevel: 2,
+
+  // Compression level for brotli (1-11).
+  brotliLevel: 4,
+
+  // Compression level for gzip (0-9).
+  gzipLevel: 6,
+
+  // A function to determine if a given context should be compressed.
+  // Must return true to enable compression.
+  filter: (c) => {
+    return !c.req.path.startsWith('/api/')
+  }
+}))
 ```
 
-### encoding
+## Automatic Deactivation
 
-Defaults to `undefined`.
+Compression is automatically bypassed under the following conditions:
 
-The compression format encoding to use to compress the response content.
-Can be one of the following:
+*   The `Content-Encoding` header is already present on the response.
+*   The `x-no-compression` header is present on the request.
+*   The `Cache-Control` header contains the `no-transform` directive.
+*   The response body size is smaller than the configured `threshold`.
+*   The `Content-Type` is not typically compressible (e.g., `image/*`, `video/*`).
+*   The request method is `HEAD`.
 
-- `zstd`
-- `br`
-- `gzip`
-- `deflate`
+## Runtime Compatibility
 
-If not defined, all the formats declared in the option `encodings` are allowed.
+| Runtime              | `zstd` | `brotli` | `gzip` | `deflate` |
+| -------------------- | ------ | -------- | ------ | --------- |
+| **Bun**              | Yes    | Yes      | Yes    | Yes       |
+| **Node.js**          | Yes    | Yes      | Yes    | Yes       |
+| **Deno**             | \*     | Yes      | Yes    | Yes       |
+| **Cloudflare Workers** | \*     | Yes      | Yes    | Yes       |
 
-This option is provided primarily to maintain compatibility with `hono/compress`, use the option `encodings` to set the wanted compression formats.
+*\* Lacks native support. Middleware falls back to the next available encoding.*
 
-### encodings
+## API Reference
 
-Defaults to `['zstd', 'br', 'gzip', 'deflate']`.
+### `compress(options?: CompressOptions)`
 
-The compression format encodings allowed to be used to compress the response content.
+| Option      | Type                         | Default                             | Description                                            |
+| ----------- | ---------------------------- | ----------------------------------- | ------------------------------------------------------ |
+| `encoding`  | `CompressionEncoding`        | `undefined`                         | Force a specific encoding algorithm.                   |
+| `encodings` | `CompressionEncoding[]`      | `['zstd', 'br', 'gzip', 'deflate']` | Allowed algorithms in order of preference.             |
+| `threshold` | `number`                     | `1024`                              | Minimum response size in bytes to compress.            |
+| `zstdLevel` | `number`                     | `2`                                 | Zstandard compression level (1-22).                    |
+| `brotliLevel` | `number`                     | `4`                                 | Brotli compression level (1-11).                       |
+| `gzipLevel` | `number`                     | `6`                                 | Gzip compression level (0-9).                          |
+| `filter`    | `(context: Context) => boolean` | `undefined`                         | Function to conditionally enable/disable compression.  |
 
-The first format matching the request accept-encoding is chosen to be used to compress the response content.
-
-### force
-
-Defaults to `false`.
-
-Forces content compression even if the request accept-encoding and the response content-type cannot be determined.
-
-Use with caution.
-
-### threshold
-
-Defaults to `1024`.
-
-The minimum size in bytes for a response content to be compressed.
-
-### zstdLevel
-
-Defaults to `2`.
-
-Zstandard algorithm compression level (encoding `zstd`).
-
-Refer to the zstd [manual](https://facebook.github.io/zstd/zstd_manual.html) for more details.
-
-### brotliLevel
-
-Defaults to `4`.
-
-Brotli algorithm compression level (encoding `br`).
-
-Refer to the Brotli [specification](https://www.ietf.org/rfc/rfc7932.txt) for more details.
-
-### gzipLevel
-
-Defaults to `6`.
-
-Gzip algorithms compression level (encoding `gzip` and `deflate`).
-
-Refer to the zlib [manual](https://zlib.net/manual.html) for more details.
-
-### options
-
-Defaults to `{}`.
-
-Options passed to the node compression engine to compress content.
-
-Refer to the node zlib [documentation](https://nodejs.org/api/zlib.html) for more details.
-
-### filter
-
-Defaults to `undefined`.
-
-An optional function callback to state if the response content should be compressed or not.
-
-#### Parameters
-
-- [Hono Context](https://hono.dev/docs/api/context)
-
-#### Return value
-
-Boolean
-
-By default, content compression is disabled on Cloudflare Workers and Deno Deploy, a custom filter can be used to bypass this behavior and force the response to be always compressed:
+### Types
 
 ```typescript
 import type { Context } from 'hono'
 
-compress({
-  filter: (c: Context) => true,
-})
+type CompressionEncoding = 'zstd' | 'br' | 'gzip' | 'deflate'
+
+interface CompressOptions {
+  encoding?: CompressionEncoding
+  encodings?: CompressionEncoding[]
+  threshold?: number
+  zstdLevel?: number
+  brotliLevel?: number
+  gzipLevel?: number
+  filter?: (context: Context) => boolean
+}
 ```
 
-## About
+## Note
 
-This project is a fork of [bun-compression](https://github.com/sunneydev/bun-compression), which itself is a fork of [elysia-compression](https://github.com/gusb3ll/elysia-compression).
+This package is an experimental fork of `hono-compress` with modifications and additional features.
 
-Both projects were unmaintained and lacked many of the features I was looking for, so I started with them, but ended up improving and expanding many parts, eventually rewriting them from scratch.
+## License
 
-This project was also inspired by [hono/compress](https://github.com/honojs/hono), [expressjs/compression](https://github.com/expressjs/compression) and [elysia-compress](https://github.com/vermaysha/elysia-compress).
+MIT

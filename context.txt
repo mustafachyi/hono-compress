@@ -1,1690 +1,0 @@
-hono-compress/
-├── .bunfig.toml
-├── .editorconfig
-├── .github
-│   ├── copilot-instructions.md
-│   └── workflows
-│       └── build.yml
-├── .gitignore
-├── README.md
-├── eslint.config.js
-├── package.json
-├── prettier.config.js
-├── src
-│   ├── constants.ts
-│   ├── helpers.ts
-│   ├── imports.ts
-│   ├── index.ts
-│   ├── middleware.ts
-│   ├── streams.ts
-│   └── types.ts
-├── tests
-│   ├── index.test.ts
-│   └── mei.jpg
-└── tsconfig.json
-
---- .bunfig.toml ---
-````toml
-[install]
-auto = "force"
-exact = false
-production = false
-
-[install.scopes]
-"*" = { trusted = true }
-
-[install.cache]
-dir = "~/.bun/install/cache"
-
-[run]
-bun = true
-
-````
-
---- .editorconfig ---
-````
-root = true
-
-[*]
-charset = utf-8
-end_of_line = lf
-indent_size = 2
-indent_style = space
-insert_final_newline = true
-trim_trailing_whitespace = true
-
-[*.md]
-indent_size = 4
-trim_trailing_whitespace = false
-
-````
-
---- .github/copilot-instructions.md ---
-````md
-# Principle Zero: The Directive of Optimality
-
-The primary and non-negotiable objective is to deliver the most effective solution by achieving the optimal synthesis of **correctness, clarity, and performance**. A solution's value is measured by its capacity to solve the user's specific problem with absolute robustness and maximum efficiency.
-
----
-
-## I. Input Analysis & Strategy Formulation
-
-1.  **Deconstruct and Clarify:**
-    *   Systematically dissect every user request into its fundamental components and discrete logical steps.
-    *   Analyze the full conversational context to inform the current request's execution.
-    *   If any ambiguity exists, formulate specific, technical questions to achieve absolute clarity. Make zero assumptions about unstated requirements.
-
-2.  **Strategic Planning:**
-    *   Before generating any artifact (code, text, etc.), devise a sequential, logical plan of execution.
-    *   Identify the most direct path to the solution, prioritizing the simplest effective approach that meets all constraints.
-
-3.  **Tool and Library Selection:**
-    *   Select only the most appropriate high-performance libraries and internal tools for the task.
-    *   Justify each selection based on the specific needs of the problem, balancing performance with robustness and established best practices.
-
----
-
-## II. Code Generation & Execution
-
-1.  **Hierarchy of Implementation Priorities:**
-    *   **1. Correctness:** The code must produce the correct result and handle all specified and inferred edge cases. It is non-negotiable.
-    *   **2. Clarity:** The code must be entirely self-documenting. Its purpose, logic, and flow must be immediately obvious from its structure and naming.
-    *   **3. Performance:** The code must be optimized for speed and resource efficiency without compromising correctness or clarity.
-
-2.  **Code Syntax & Architecture:**
-    *   **Absolute Zero-Comments Mandate:** All forms of code comments are unconditionally forbidden. This prohibition includes, but is not limited to: single-line comments (e.g., `//`, `#`), multi-line/block comments (e.g., `/* ... */`), and documentation strings/blocks in any form (e.g., Python's `"""..."""`, Javadoc's `/** ... */`). Any text within a code file that is not part of the executable syntax is a violation. Clarity must be achieved *exclusively* through architectural purity, precise naming, and self-evident logical flow.
-    *   **Conciseness and No Redundancy:** Generate the most concise code possible that adheres to the other principles. Eliminate all boilerplate, redundant logic, unnecessary variables, and superfluous operations.
-    *   **Robust Error Handling:** Integrate precise and explicit error and exception handling directly into the code's structure to manage all potential failures gracefully.
-    *   **Strict Formatting:** All code must adhere to a consistent, clean, and standard format. For Python, this means strict adherence to PEP 8, with a maximum line length of 88 characters. Indentation must be exactly 4 spaces.
-
-3.  **Execution Environment & Code Blocks:**
-    *   **Stateless Execution:** Recognize that the `tool_code` execution environment is stateless. Each execution block must be entirely self-contained, declaring all necessary imports, dependencies, and variables.
-    *   **Quad-Backtick Encapsulation:** All `tool_code` blocks must be encapsulated using four backticks (````) to ensure robust parsing and prevent formatting conflicts with nested code snippets.
-
-    **Example of a correctly formatted `tool_code` block:**
-    ````python
-    import pandas as pd
-
-    def create_and_display_dataframe(data: dict):
-        """This is a docstring and is forbidden."""
-        # This is a single-line comment and is forbidden.
-        df = pd.DataFrame(data)
-        print(df)
-
-    sample_data = {
-        'column_one': [1, 2],
-        'column_two': [3, 4],
-    }
-    create_and_display_dataframe(sample_data)
-    ````
-    **The above example contains violations.** The correct implementation would be:
-    ````python
-    import pandas as pd
-
-    def create_and_display_dataframe(data: dict):
-        frame = pd.DataFrame(data)
-        print(frame)
-
-    data_to_display = {
-        'column_one': [1, 2],
-        'column_two': [3, 4],
-    }
-    create_and_display_dataframe(data_to_display)
-    ````
-
----
-
-## III. Output & Communication
-
-1.  **Directness and Focus:**
-    *   Center the response exclusively on providing a complete and direct solution to the user's query.
-    *   Present code, data, and results with the minimal necessary surrounding exposition. The solution itself is the primary content of the response.
-
-2.  **Professional Standards:**
-    *   Maintain a professional and direct tone using precise, unambiguous technical language.
-    *   Use Markdown for all responses to ensure structured, clean, and readable output.
-    *   Explicitly state all external dependencies required to run any generated code at the beginning of the response.
-````
-
---- .github/workflows/build.yml ---
-````yml
-name: Build and Release
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18, 20, 22]
-    
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Install Hono peer dependency
-      run: npm install hono@^4.8.12 --no-save
-      
-    - name: Type check
-      run: npm run typecheck
-      
-    - name: Lint
-      run: npm run lint
-      
-    - name: Test
-      run: npm test
-      
-    - name: Build
-      run: npm run build
-      
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dist-node${{ matrix.node-version }}
-        path: dist/
-        retention-days: 7
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Install Hono peer dependency
-      run: npm install hono@^4.8.12 --no-save
-      
-    - name: Build
-      run: npm run build
-      
-    - name: Create archive
-      run: tar -czf hono-compress-dist.tar.gz dist/
-        
-    - name: Upload release
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-build
-        path: hono-compress-dist.tar.gz
-
-````
-
---- .gitignore ---
-````
-### https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
-
-# General
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Icon must end with two \r
-Icon
-
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-
-### https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-
-# Local History for Visual Studio Code
-.history/
-
-# Built Visual Studio Code Extensions
-*.vsix
-
-
-### https://github.com/github/gitignore/blob/main/Node.gitignore
-
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
-
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Directory for instrumented libs generated by jscoverage/JSCover
-lib-cov
-
-# Coverage directory used by tools like istanbul
-coverage
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
-.grunt
-
-# Bower dependency directory (https://bower.io/)
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
-
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# Snowpack dependency directory (https://snowpack.dev/)
-web_modules/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-# Comment in the public line in if your project uses Gatsby and not Next.js
-# https://nextjs.org/blog/next-9-1#public-directory-support
-# public
-
-# vuepress build output
-.vuepress/dist
-
-# vuepress v2.x temp and cache directory
-.temp
-.cache
-
-# Docusaurus cache and generated files
-.docusaurus
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# Bun
-.bun
-
-````
-
---- eslint.config.js ---
-````js
-import eslint from '@eslint/js'
-import prettier from 'eslint-config-prettier'
-import importX from 'eslint-plugin-import-x'
-import markdown from 'eslint-plugin-markdown'
-import perfectionist from 'eslint-plugin-perfectionist'
-import regexp from 'eslint-plugin-regexp'
-import security from 'eslint-plugin-security'
-import sonarjs from 'eslint-plugin-sonarjs'
-import tsdoc from 'eslint-plugin-tsdoc'
-import unicorn from 'eslint-plugin-unicorn'
-import tseslint from 'typescript-eslint'
-
-export default tseslint.config(
-  eslint.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...markdown.configs.recommended,
-  unicorn.configs['flat/recommended'],
-  regexp.configs['flat/recommended'],
-  importX.flatConfigs.recommended,
-  importX.flatConfigs.typescript,
-  perfectionist.configs['recommended-natural'],
-  security.configs.recommended,
-  sonarjs.configs.recommended,
-  prettier,
-  { ignores: ['dist', 'README.md'] },
-  { plugins: { tsdoc } },
-  {
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
-      'import-x/no-named-as-default-member': 'off',
-      'import-x/no-unresolved': 'warn',
-      'no-undef': 'off',
-      'perfectionist/sort-interfaces': 'off',
-      'perfectionist/sort-modules': 'off',
-      'perfectionist/sort-object-types': 'off',
-      'perfectionist/sort-objects': 'off',
-      'sonarjs/cognitive-complexity': ['error', 12],
-      'tsdoc/syntax': 'warn',
-      'unicorn/consistent-function-scoping': 'off',
-      'unicorn/filename-case': 'off',
-      'unicorn/no-null': 'off',
-      'unicorn/prefer-top-level-await': 'off',
-      'unicorn/prevent-abbreviations': 'off',
-    },
-  },
-  {
-    settings: { 'import-x/resolver': { typescript: true } },
-  },
-)
-````
-
---- package.json ---
-````json
-{
-  "name": "hono-compress",
-  "type": "module",
-  "version": "0.7.0",
-  "description": "Compression plugin for Hono working with Bun",
-  "author": {
-    "name": "Walter Purcaro",
-    "url": "https://github.com/vuolter"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/vuolter/hono-compress"
-  },
-  "keywords": [
-    "hono",
-    "compression",
-    "node",
-    "deno",
-    "bun",
-    "edge",
-    "zstd",
-    "brotli",
-    "gzip",
-    "deflate"
-  ],
-  "exports": {
-    "import": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
-    },
-    "require": {
-      "types": "./dist/index.d.cts",
-      "default": "./dist/index.cjs"
-    }
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
-  "files": [
-    "dist"
-  ],
-  "url": "https://github.com/vuolter/hono-compress",
-  "scripts": {
-    "update": "bun update --latest && npm install --force --no-fund --package-lock-only",
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 pkgroll --clean-dist",
-    "build:minify": "NODE_OPTIONS=--max-old-space-size=8192 pkgroll --clean-dist --minify",
-    "build:watch": "pkgroll --clean-dist --watch",
-    "test": "bun test",
-    "format": "prettier . --write",
-    "lint": "eslint --cache --cache-location node_modules/.cache/eslint --cache-strategy content --fix .",
-    "typecheck": "tsc --noEmit",
-    "lock": "bun install --silent && npm install --force --no-audit --no-fund --package-lock-only"
-  },
-  "peerDependencies": {
-    "hono": "^4.8.12"
-  },
-  "dependencies": {
-    "@mongodb-js/zstd": "^2.0.1",
-    "brotli-wasm": "^3.0.1"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.32.0",
-    "@types/bun": "^1.2.19",
-    "@types/eslint__js": "^9.14.0",
-    "@types/node": "^24.1.0",
-    "eslint": "^9.32.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import-x": "^4.16.1",
-    "eslint-plugin-markdown": "^5.1.0",
-    "eslint-plugin-perfectionist": "^4.15.0",
-    "eslint-plugin-regexp": "^2.9.1",
-    "eslint-plugin-security": "^3.0.1",
-    "eslint-plugin-sonarjs": "^3.0.4",
-    "eslint-plugin-tsdoc": "^0.4.0",
-    "eslint-plugin-unicorn": "^60.0.0",
-    "pkgroll": "^2.15.0",
-    "prettier": "^3.6.2",
-    "type-fest": "^4.41.0",
-    "typescript": "~5.8.0",
-    "typescript-eslint": "^8.38.0"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-darwin-arm64": "^4.46.2",
-    "@rollup/rollup-darwin-x64": "^4.46.2",
-    "@rollup/rollup-linux-x64-gnu": "^4.46.2",
-    "@rollup/rollup-win32-x64-msvc": "^4.46.2"
-  },
-  "trustedDependencies": [
-    "@mongodb-js/zstd",
-    "unrs-resolver"
-  ]
-}
-````
-
---- prettier.config.js ---
-````js
-export default {
-  printWidth: 88,
-  semi: false,
-  singleQuote: true,
-  tabWidth: 2,
-  trailingComma: 'all',
-}
-
-````
-
---- README.md ---
-````md
-# hono-compress
-
-Compression plugin for [Hono](https://github.com/honojs/hono)
-
-Drop-in replacement of the built-in [Compress Middleware](https://hono.dev/docs/middleware/builtin/compress), but with some extra...
-
-### Features
-
-- all available compression formats (`zstd`, `brotli`, `gzip`, `deflate`)
-- ultra-fast and 100% type-safe ✨
-- best format auto-selection
-- streaming response support
-- configurable compression level and zlib options
-- double-compressed content protection
-- content size threshold and custom filtering
-- Cloudflare Workers and Deno Deploy runtime detection
-- works with [Node](https://nodejs.org/), [Deno](https://deno.com/) and [Bun](https://bun.sh/)
-
-Leave a star on GitHub if you like it 🙏
-
-## Installation
-
-<details open>
-<summary>npm</summary>
-
-```bash
-npm install hono-compress
-```
-
-</details>
-
-<details>
-<summary>Yarn</summary>
-
-```bash
-yarn add hono-compress
-```
-
-</details>
-
-<details>
-<summary>pnpm</summary>
-
-```bash
-pnpm add hono-compress
-```
-
-</details>
-
-<details>
-<summary>Bun</summary>
-
-```bash
-bun add hono-compress
-```
-
-</details>
-
-<details>
-<summary>Deno</summary>
-
-```bash
-deno add hono-compress
-```
-
-</details>
-
-## Usage
-
-```typescript
-import { Hono } from 'hono'
-import { compress } from 'hono-compress'
-
-const app = new Hono()
-
-app.use(compress())
-```
-
-## Configuration
-
-```typescript
-compress({
-  encoding,
-  encodings,
-  force,
-  threshold,
-  zstdLevel,
-  brotliLevel,
-  gzipLevel,
-  options,
-  filter,
-})
-```
-
-### encoding
-
-Defaults to `undefined`.
-
-The compression format encoding to use to compress the response content.
-Can be one of the following:
-
-- `zstd`
-- `br`
-- `gzip`
-- `deflate`
-
-If not defined, all the formats declared in the option `encodings` are allowed.
-
-This option is provided primarily to maintain compatibility with `hono/compress`, use the option `encodings` to set the wanted compression formats.
-
-### encodings
-
-Defaults to `['zstd', 'br', 'gzip', 'deflate']`.
-
-The compression format encodings allowed to be used to compress the response content.
-
-The first format matching the request accept-encoding is chosen to be used to compress the response content.
-
-### force
-
-Defaults to `false`.
-
-Forces content compression even if the request accept-encoding and the response content-type cannot be determined.
-
-Use with caution.
-
-### threshold
-
-Defaults to `1024`.
-
-The minimum size in bytes for a response content to be compressed.
-
-### zstdLevel
-
-Defaults to `2`.
-
-Zstandard algorithm compression level (encoding `zstd`).
-
-Refer to the zstd [manual](https://facebook.github.io/zstd/zstd_manual.html) for more details.
-
-### brotliLevel
-
-Defaults to `4`.
-
-Brotli algorithm compression level (encoding `br`).
-
-Refer to the Brotli [specification](https://www.ietf.org/rfc/rfc7932.txt) for more details.
-
-### gzipLevel
-
-Defaults to `6`.
-
-Gzip algorithms compression level (encoding `gzip` and `deflate`).
-
-Refer to the zlib [manual](https://zlib.net/manual.html) for more details.
-
-### options
-
-Defaults to `{}`.
-
-Options passed to the node compression engine to compress content.
-
-Refer to the node zlib [documentation](https://nodejs.org/api/zlib.html) for more details.
-
-### filter
-
-Defaults to `undefined`.
-
-An optional function callback to state if the response content should be compressed or not.
-
-#### Parameters
-
-- [Hono Context](https://hono.dev/docs/api/context)
-
-#### Return value
-
-Boolean
-
-By default, content compression is disabled on Cloudflare Workers and Deno Deploy, a custom filter can be used to bypass this behavior and force the response to be always compressed:
-
-```typescript
-import type { Context } from 'hono'
-
-compress({
-  filter: (c: Context) => true,
-})
-```
-
-## About
-
-This project is a fork of [bun-compression](https://github.com/sunneydev/bun-compression), which itself is a fork of [elysia-compression](https://github.com/gusb3ll/elysia-compression).
-
-Both projects were unmaintained and lacked many of the features I was looking for, so I started with them, but ended up improving and expanding many parts, eventually rewriting them from scratch.
-
-This project was also inspired by [hono/compress](https://github.com/honojs/hono), [expressjs/compression](https://github.com/expressjs/compression) and [elysia-compress](https://github.com/vermaysha/elysia-compress).
-
-````
-
---- src/constants.ts ---
-````ts
-export const CLOUDFLARE_WORKERS_NAVIGATOR = 'Cloudflare-Workers'
-
-export const ACCEPTED_ENCODINGS = ['zstd', 'br', 'gzip', 'deflate'] as const
-export const NODE_ENCODINGS = ['br', 'gzip', 'deflate'] as const
-
-export const CACHECONTROL_NOTRANSFORM_REGEXP = /(?:^|,)\s*no-transform\s*(?:,|$)/i
-
-export const THRESHOLD_SIZE = 1024
-
-export const ZSTD_DEFAULT_LEVEL = 2
-export const ZSTD_MIN_LEVEL = 1
-export const ZSTD_MAX_LEVEL = 22
-
-export const BROTLI_DEFAULT_LEVEL = 4
-export const BROTLI_MIN_LEVEL = 1
-export const BROTLI_MAX_LEVEL = 11
-
-export const GZIP_DEFAULT_LEVEL = 6
-export const GZIP_MIN_LEVEL = 0
-export const GZIP_MAX_LEVEL = 9
-````
-
---- src/helpers.ts ---
-````ts
-import { COMPRESSIBLE_CONTENT_TYPE_REGEX } from 'hono/utils/compress'
-
-import {
-  CACHECONTROL_NOTRANSFORM_REGEXP,
-  CLOUDFLARE_WORKERS_NAVIGATOR,
-} from '~/constants'
-
-export const isCloudflareWorkers =
-  globalThis.navigator?.userAgent === CLOUDFLARE_WORKERS_NAVIGATOR
-
-export const isDenoDeploy =
-  (globalThis as any).Deno?.env?.get('DENO_DEPLOYMENT_ID') !== undefined
-
-export function isCompressible(response: Response, forceCompression: boolean) {
-  const contentType = response.headers.get('Content-Type')
-  return contentType
-    ? COMPRESSIBLE_CONTENT_TYPE_REGEX.test(contentType)
-    : forceCompression
-}
-
-export function isTransformable(response: Response) {
-  const cacheControl = response.headers.get('Cache-Control')
-  return !cacheControl || !CACHECONTROL_NOTRANSFORM_REGEXP.test(cacheControl)
-}
-````
-
---- src/imports.ts ---
-````ts
-import type { BrotliWasmType } from 'brotli-wasm'
-
-export const brotli: BrotliWasmType | null = await import('brotli-wasm')
-  .then(async (module) => await module.default)
-  .catch(() => null)
-
-export const zlib = await import('node:zlib').catch(() => null)
-````
-
---- src/index.ts ---
-````ts
-export { compress, compress as default } from '~/middleware'
-export * from '~/streams'
-export * from '~/types'
-
-````
-
---- src/middleware.ts ---
-````ts
-import type { Context, MiddlewareHandler } from 'hono'
-
-import type { CompressionEncoding, CompressOptions } from '~/types'
-
-import {
-  ACCEPTED_ENCODINGS,
-  BROTLI_DEFAULT_LEVEL,
-  GZIP_DEFAULT_LEVEL,
-  THRESHOLD_SIZE,
-  ZSTD_DEFAULT_LEVEL,
-} from '~/constants'
-import {
-  isCloudflareWorkers,
-  isCompressible,
-  isDenoDeploy,
-  isTransformable,
-} from '~/helpers'
-import { brotli, zlib } from '~/imports'
-import {
-  BrotliCompressionStream,
-  ZlibCompressionStream,
-  ZstdCompressionStream,
-} from '~/streams'
-
-function validateEncodings(encodings: CompressionEncoding[]) {
-  const unsupportedEncoding = encodings.find(
-    (encoding) => !ACCEPTED_ENCODINGS.includes(encoding),
-  )
-  if (unsupportedEncoding) {
-    throw new Error(`Unsupported encoding: ${unsupportedEncoding}.`)
-  }
-}
-
-function findMatchingEncoding(
-  context: Context,
-  availableEncodings: CompressionEncoding[],
-): CompressionEncoding | null {
-  const acceptEncodingHeader = context.req.header('Accept-Encoding')
-  if (!acceptEncodingHeader) {
-    return null
-  }
-  return (
-    availableEncodings.find((encoding) =>
-      acceptEncodingHeader.includes(encoding),
-    ) ?? null
-  )
-}
-
-function createCompressionStream(
-  encoding: CompressionEncoding,
-  zstdLevel: number,
-  brotliLevel: number,
-  gzipLevel: number,
-  options: any,
-): { stream: any; isTransformStream: boolean } {
-  if (encoding === 'zstd') {
-    return { stream: new ZstdCompressionStream(zstdLevel), isTransformStream: true }
-  }
-  if (encoding === 'br' && brotli) {
-    return { stream: new BrotliCompressionStream(brotliLevel), isTransformStream: false }
-  }
-  if (encoding === 'gzip' || encoding === 'deflate') {
-    if (zlib) {
-      return {
-        stream: new ZlibCompressionStream(encoding, { level: gzipLevel, ...options }),
-        isTransformStream: false,
-      }
-    }
-    return { stream: new CompressionStream(encoding), isTransformStream: true }
-  }
-  return { stream: null, isTransformStream: false }
-}
-
-function shouldSkipCompression(
-  context: Context,
-  threshold: number,
-  force: boolean,
-  filter: any,
-): boolean {
-  if (!context.res.body || context.req.method === 'HEAD') return true
-  if (context.res.headers.has('Content-Encoding')) return true
-  
-  const contentLength = Number(context.res.headers.get('Content-Length'))
-  if (contentLength > 0 && contentLength < threshold) return true
-  
-  return (
-    !isCompressible(context.res, force) ||
-    !isTransformable(context.res) ||
-    !!context.req.header('x-no-compression') ||
-    (filter ? !filter(context) : isDenoDeploy || isCloudflareWorkers)
-  )
-}
-
-export function compress({
-  encoding,
-  encodings = [...ACCEPTED_ENCODINGS],
-  force = false,
-  threshold = THRESHOLD_SIZE,
-  zstdLevel = ZSTD_DEFAULT_LEVEL,
-  brotliLevel = BROTLI_DEFAULT_LEVEL,
-  gzipLevel = GZIP_DEFAULT_LEVEL,
-  options = {},
-  filter,
-}: CompressOptions = {}): MiddlewareHandler {
-  const activeEncodings = encoding ? [encoding] : encodings
-  validateEncodings(activeEncodings)
-
-  return async function compressionMiddleware(context, next) {
-    await next()
-
-    if (shouldSkipCompression(context, threshold, force, filter)) return
-
-    const matchedEncoding =
-      findMatchingEncoding(context, activeEncodings) ?? (force ? activeEncodings[0] : null)
-
-    if (!matchedEncoding) return
-
-    const { stream, isTransformStream } = createCompressionStream(
-      matchedEncoding,
-      zstdLevel,
-      brotliLevel,
-      gzipLevel,
-      options,
-    )
-
-    if (!stream) return
-
-    context.res = isTransformStream
-      ? new Response(context.res.body!.pipeThrough(stream as TransformStream), context.res)
-      : await context.res.body!.pipeTo(stream.writable).then(() => new Response(stream.readable, context.res))
-
-    context.res.headers.delete('Content-Length')
-    context.res.headers.set('Content-Encoding', matchedEncoding)
-  }
-}
-````
-
---- src/streams.ts ---
-````ts
-import type { Duplex } from 'node:stream'
-
-import zstd from '@mongodb-js/zstd'
-import { Buffer } from 'node:buffer'
-
-import type { NodeCompressionEncoding, NodeCompressionOptions } from '~/types'
-
-import { brotli, zlib } from '~/imports'
-
-export class ZstdCompressionStream extends TransformStream<Uint8Array, Uint8Array> {
-  constructor(level?: number) {
-    super({
-      async transform(chunk, controller) {
-        const compressedChunk = await zstd.compress(Buffer.from(chunk), level)
-        controller.enqueue(compressedChunk)
-      },
-    })
-  }
-}
-
-export class BrotliCompressionStream {
-  readonly readable: ReadableStream
-  readonly writable: WritableStream
-
-  constructor(_level?: number) {
-    const compressor = new (brotli as any).CompressStream()
-    let controller: ReadableStreamDefaultController<Uint8Array>
-    
-    this.readable = new ReadableStream({
-      start(c) {
-        controller = c
-      },
-    })
-    
-    this.writable = new WritableStream({
-      write(chunk: Uint8Array) {
-        const compressed = compressor.compress(
-          chunk,
-          (brotli as any).BrotliStreamResultCode.NeedsMoreInput,
-        )
-        if (compressed) controller.enqueue(compressed)
-      },
-      close() {
-        const final = compressor.compress(
-          new Uint8Array(0),
-          (brotli as any).BrotliStreamResultCode.Finished,
-        )
-        if (final) controller.enqueue(final)
-        controller.close()
-      },
-    })
-  }
-}
-
-function createZlibCompressHandle(
-  encoding: NodeCompressionEncoding,
-  options?: NodeCompressionOptions,
-): Duplex {
-  switch (encoding) {
-    case 'br': {
-      const { windowBits, level, memLevel, params, ...rest } = options ?? {}
-      const {
-        BROTLI_PARAM_LGWIN,
-        BROTLI_PARAM_QUALITY,
-        BROTLI_PARAM_LGBLOCK,
-      } = zlib!.constants
-
-      const brotliOptions = {
-        params: {
-          ...(windowBits && { [BROTLI_PARAM_LGWIN]: windowBits }),
-          ...(level && { [BROTLI_PARAM_QUALITY]: level }),
-          ...(memLevel && { [BROTLI_PARAM_LGBLOCK]: memLevel }),
-          ...params,
-        },
-        ...rest,
-      }
-      return zlib!.createBrotliCompress(brotliOptions)
-    }
-    case 'deflate': {
-      return zlib!.createDeflate(options)
-    }
-    case 'gzip': {
-      return zlib!.createGzip(options)
-    }
-    default: {
-      return zlib!.createDeflateRaw(options) as never
-    }
-  }
-}
-
-export class ZlibCompressionStream {
-  readonly readable: ReadableStream
-  readonly writable: WritableStream
-
-  constructor(
-    encoding: NodeCompressionEncoding,
-    options?: NodeCompressionOptions,
-  ) {
-    const zlibHandle = createZlibCompressHandle(encoding, options)
-
-    this.readable = new ReadableStream({
-      async start(controller) {
-        for await (const chunk of zlibHandle) {
-          controller.enqueue(chunk)
-        }
-        controller.close()
-      },
-    })
-
-    this.writable = new WritableStream({
-      write(chunk: Uint8Array) {
-        zlibHandle.write(Buffer.from(chunk))
-      },
-      close() {
-        zlibHandle.end()
-      },
-    })
-  }
-}
-````
-
---- src/types.ts ---
-````ts
-import type { Context } from 'hono'
-import type { BrotliOptions, ZlibOptions } from 'node:zlib'
-import type { IntClosedRange } from 'type-fest'
-
-import type {
-  ACCEPTED_ENCODINGS,
-  BROTLI_MAX_LEVEL,
-  BROTLI_MIN_LEVEL,
-  GZIP_MAX_LEVEL,
-  GZIP_MIN_LEVEL,
-  NODE_ENCODINGS,
-  ZSTD_MAX_LEVEL,
-  ZSTD_MIN_LEVEL,
-} from '~/constants'
-
-export type CompressionEncoding = (typeof ACCEPTED_ENCODINGS)[number]
-
-export type NodeCompressionEncoding = (typeof NODE_ENCODINGS)[number]
-export type NodeCompressionOptions = BrotliOptions & ZlibOptions
-
-export type CompressionFilter = (context: Context) => boolean
-
-export type ZstdLevel = IntClosedRange<typeof ZSTD_MIN_LEVEL, typeof ZSTD_MAX_LEVEL>
-export type BrotliLevel = IntClosedRange<
-  typeof BROTLI_MIN_LEVEL,
-  typeof BROTLI_MAX_LEVEL
->
-export type GzipLevel = IntClosedRange<typeof GZIP_MIN_LEVEL, typeof GZIP_MAX_LEVEL>
-
-export interface CompressOptions {
-  encoding?: CompressionEncoding
-  encodings?: CompressionEncoding[]
-  force?: boolean
-  threshold?: number
-  zstdLevel?: ZstdLevel
-  brotliLevel?: BrotliLevel
-  gzipLevel?: GzipLevel
-  options?: NodeCompressionOptions
-  filter?: CompressionFilter
-}
-````
-
---- tests/index.test.ts ---
-````ts
-import { describe, expect, it } from 'bun:test'
-import { type Context, Hono } from 'hono'
-
-import type { CompressionEncoding } from '~/types'
-
-import { compress } from '~/middleware'
-
-const TEXT_BODY = `
-もしも願いが一つ叶うなら
-世界でたった一人だけの友達を
-生きることは素晴らしいこと
-そんなふうに私も思ってみたい`
-
-const SMALL_BODY = 'Hello, world!'
-
-function createRequest(encoding: CompressionEncoding, headers?: HeadersInit) {
-  return new Request('http://localhost/', {
-    headers: { 'Accept-Encoding': encoding, ...headers },
-  })
-}
-
-function textHandler(c: Context) {
-  return c.text(TEXT_BODY, 200, { 'Content-Type': 'text/plain' })
-}
-
-describe('Compression Middleware', () => {
-  describe('Encoding Support', () => {
-    it('should handle zstd compression', async () => {
-      const app = new Hono().use(compress()).get('/', textHandler)
-      const response = await app.request(createRequest('zstd'))
-      expect(response.headers.get('Content-Encoding')).toBe('zstd')
-    })
-
-    it('should handle brotli compression', async () => {
-      const app = new Hono().use(compress()).get('/', textHandler)
-      const response = await app.request(createRequest('br'))
-      expect(response.headers.get('Content-Encoding')).toBe('br')
-    })
-
-    it('should handle gzip compression', async () => {
-      const app = new Hono().use(compress()).get('/', textHandler)
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe('gzip')
-    })
-
-    it('should handle deflate compression', async () => {
-      const app = new Hono().use(compress()).get('/', textHandler)
-      const response = await app.request(createRequest('deflate'))
-      expect(response.headers.get('Content-Encoding')).toBe('deflate')
-    })
-  })
-
-  describe('Configuration and Options', () => {
-    it('should respect a custom threshold and not compress below it', async () => {
-      const app = new Hono()
-        .use(compress({ threshold: 100 }))
-        .get('/', (c) => {
-          const headers = { 'Content-Type': 'text/plain', 'Content-Length': SMALL_BODY.length.toString() }
-          return c.text(SMALL_BODY, 200, headers)
-        })
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe(null)
-    })
-
-    it('should respect a custom threshold and compress above it', async () => {
-      const app = new Hono()
-        .use(compress({ threshold: 10 }))
-        .get('/', (c) => {
-          const headers = { 'Content-Type': 'text/plain', 'Content-Length': SMALL_BODY.length.toString() }
-          return c.text(SMALL_BODY, 200, headers)
-        })
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe('gzip')
-    })
-
-    it('should not compress when filter returns false', async () => {
-      const app = new Hono().use(compress({ filter: () => false })).get('/', textHandler)
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe(null)
-    })
-
-    it('should compress when filter returns true', async () => {
-      const app = new Hono().use(compress({ filter: () => true })).get('/', textHandler)
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe('gzip')
-    })
-
-    it('should throw an error for unsupported encodings', () => {
-      const initializeWithInvalidEncoding = () => {
-        new Hono().use(compress({ encoding: 'invalid-encoding' as any }))
-      }
-      expect(initializeWithInvalidEncoding).toThrow('Unsupported encoding: invalid-encoding.')
-    })
-  })
-
-  describe('Header Handling', () => {
-    it('should preserve additional response headers', async () => {
-      const app = new Hono().use(compress({ encoding: 'deflate' })).get('/', (c) => {
-        c.res.headers.set('X-Powered-By', 'Hono')
-        return textHandler(c)
-      })
-      const response = await app.request(createRequest('deflate'))
-      expect(response.headers.get('Content-Encoding')).toBe('deflate')
-      expect(response.headers.get('X-Powered-By')).toBe('Hono')
-    })
-
-    it('should not compress if "x-no-compression" request header is present', async () => {
-      const app = new Hono().use(compress()).get('/', textHandler)
-      const request = createRequest('gzip', { 'x-no-compression': 'true' })
-      const response = await app.request(request)
-      expect(response.headers.get('Content-Encoding')).toBe(null)
-    })
-
-    it('should not compress if "Cache-Control: no-transform" is set', async () => {
-      const app = new Hono().use(compress()).get('/', (c) => {
-        c.header('Cache-Control', 'no-transform')
-        return c.text(TEXT_BODY)
-      })
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe(null)
-    })
-
-    it('should not compress if response already has a Content-Encoding', async () => {
-      const app = new Hono().use(compress()).get('/', (c) => {
-        c.header('Content-Encoding', 'identity')
-        return c.text(TEXT_BODY)
-      })
-      const response = await app.request(createRequest('gzip'))
-      expect(response.headers.get('Content-Encoding')).toBe('identity')
-    })
-  })
-
-  describe('Content-Type Handling', () => {
-    it('should preserve "text/plain" content type', async () => {
-      const app = new Hono().use(compress({ encoding: 'deflate' })).get('/', textHandler)
-      const response = await app.request(createRequest('deflate'))
-      expect(response.headers.get('Content-Type')).toBe('text/plain')
-    })
-
-    it('should preserve "application/json" content type', async () => {
-      const app = new Hono()
-        .use(compress())
-        .get('/', (c) => c.json({ hello: 'world' }))
-      const response = await app.request(createRequest('deflate'))
-      expect(response.headers.get('Content-Type')).toStartWith('application/json')
-    })
-
-    it('should not compress non-compressible types like images', async () => {
-      const app = new Hono().use(compress())
-      app.get('/', async (c) =>
-        c.body(await Bun.file('tests/mei.jpg').arrayBuffer(), 200, {
-          'Content-Type': 'image/jpeg',
-        }),
-      )
-      const response = await app.request(createRequest('deflate'))
-      expect(response.headers.get('Content-Encoding')).toBe(null)
-      expect(response.headers.get('Content-Type')).toBe('image/jpeg')
-    })
-  })
-})
-````
-
---- tests/mei.jpg ---
-````jpg
- JFIF        		
-
-	
-
-++&.%#%.&D5//5DNB>BN_UU_wqw		
-
-	
-
-++&.%#%.&D5//5DNB>BN_UU_wqw "  .                                   Ĕ'#=!ȣ	IXygē]$\GgO"Ak %DMa!>Ȉ7bX-|yQ>B\#lIx@%~ܽX0j}_%ҚӥJ++aYpfbC*3y,CNJR orj@`pv 68eїJs[BY}7cmYco
-&D֯R+Fxd8ϖloZبpP)K1)EYGx>oetj6{9!RӨeG$J{W(f<vEoysBJ)f!h EI}] Ic'`@"ysDE[p6ѹR#gB3iSq!^_X	$#rzIrh>hĄX⣥M 	`EmԹ
-2&җ=#zI ֑}*J g =D#ZJmJ*6E5!1fj[ILS4
-(tIUCG5)
-	$^lf3>Hn      u/@
-*<j'IrOG)tDzo&?
-Ew&[UAeh̴lAԹ <_3hŔqi   vɍ@3 < ߫zbm>æ!c*x'29+jto"Ah$K O~@@&軧g  +$#`)  n˻;=$l6%qC2n<I%EYnj@ slV$37k;YlCWq]&@)Lz$ZKPx>h>L]J  twJ4\jCGD#NR6v#r<?H-3uҀ  gi)&_ک)ygƔ늦XEa̧^).J*Ki;VHEn~INJu %vrVh
-NLS+x`B%B:-F   z!^SY   q(ZTV$I2JДGGZ~Fudu+k]o0lو<5,6XBBLNp]"לYu   ۟:謬''rQ=   u$kRoV-Z3UJ7%ziՃh>lCO{sʉрBXg=VJb 9i (sdt92}lvNw      w<ӫ(\i\rUH   ,9\iՃSjtGV	`-e-)+=a!Bm&ixmsR2rbBOAھSDWMZ5m IV]^wi	\yVBFé/&_}Ms@Uo/,	W3XĒC#DngD. 57nxݱyViq٬eȅL"nV>Xr0UMpV{(zxJB>4FHUl"bS5?rInDCRW:7C9N"4ϑltj:gdd   Ey#x̌ ǣE)Vp	bQ[ב~޳令	 F?zkD+}
-~m1`4z2_$Q?5TR}4/     숹)  o	pqj>と'A"e7x?K7  ;5BM    kyM
-'FY1      yQ\rF;ނeX(\4 $  /˂'n5l      I9l%	άOl6ב  QQ}Nq	 52B9fXyib{7|{d	;s*N  4hܮ1loRcƽ@ \4u4rC os(bq
-Du܈]d99@;2>=<[N5˥ImIдgֶ1ůK6sEti3n#YdᲦS9V%-r5&zF	.h      9@wFr̴|N*}غH*	iJ%1trBr9T2r;'+w  :1įW,.}8ι*x     QTGsߖdJ   +{QP mH:5a0Y,   n2X#GNgڈww    
-.I XY`K         <ku
-h
-{kA-Q]\f`ΡN4jE)⼶*pɇ6t   ,WMڧd~jRxzc @ 9 xz V6o,Y6>ybjKyny"%۬T=wYx=bR}!HOC 9     !"1 0#2A$Q35@ERUa%46Db   oSFڈ> 2B =A7e`5xG]|?T&iz\;"TzJ W__|]?IF} `?~[GԽjܷtW
- pk&o!#~OC6A&?ţ. G]ŧ+})pO;ߟڍ&G{{#C{oK ~CxoonB^sm:x
-m=s_q:;vs yzwt;?l@W J|=ws <In
-G \k1 f?N޿X vM%Ur?'~@;'HD)^?*I[#
-V^T !]V% 
-5"ij}KF<+9T S}]t7/1a)#WNJEL"r2E#`ݪQ3]*㖇 ''b:ɠ@
-TdGF}P&2$y85Ԥ啵  ѱEaӇf 0:*#CnYkH85AY<8}Ldw8ST(ݼ}xӑ/wb	$$ʠ<q2iOv`?:VG>R=+PفRܬL 8
-|rIJJò]nb쿓HJӱFǀFb`>Y+<!RݾTtUbnrbcQ63q 9<qC/VPeQᆠ6#s+.|"7D 'Lٓ'ˬARC=6廚_e:Hϖ279,ȌufU͈"c'c!Om*
-.İ4Ŏ^VY[L|#Cjx]
->[x#\vn#pCh$A'cY#0+oV1;?)
-Bۿ}llMm%<3_/a^ЈLG;CXe/,O'(29J<hSYKHݬNٸM*ҕYLt
-vdC}>Hok #RS,MayU	
-KRWTJcK^Ȯ)IHĺ`vơ>2(ܙz,Ffň$iH&xK(j Sb#1<A]>  D-Jxi3ndQx:U/(UYE=&Ĩ+":N@ '(YceY,RQ\$+2KpHYJCfW1^/Yo,Ĳ]aI>,yVxycq-<Yf3'u͋<Z5#A"ܙW_br 9[?e^	x1<c՛JعxH{H d<"t&LTt)ua΢K#]S3V'WA%w1D^?x }HSՅwaa?JS@;Hx<NQ,D)O+P^C(HAbJ2'k1=rjX	GѴRIp6X ڍ$㴈짎v.xPXIGƞ'ws&?
-Dd;6Qlr885rKUpYcENW u1gGO F"d~0cNչ
-1/+i_p"ģ-8Xr}tTMtgYX'꒣x-XX42N'2![!	Sչ-c@fd&@-yE7e#{,1춨>U*;
--K|9P'U@#s9?"4lWg~hzkRGOJrugG.^xg=FF5$(cBV	nߋ#7TG-$gFgIp#2q\3Y	@(3,#rtTf#@!5kUg"iFr8S&KjޑB[f,O K2O5jw]|$hI&qhƬ:<$;F:w
-b	Ӹw-WQG
-`JTdqժ[I؎#U؞幂VTqB%I U-HRo|Z!h'hX2񨦆Ec\CCׅQhNU844-h:1*[ur&;E=Iɚ2ZEYUhCēO]Hb*~){0TI&	B!e:m3ƱC?&yg*i]Ӱ:1D SFC/Aez|&g#lo nUK=eo'e
-V,q?\*IF8iZ<X>@Y_gB$n8:fJ҇U]Qq`"c
-eNαR<D!He*H#T=K0XOSCū<BKgꃝH{CG#PdL*HZ"`ABO<~},ZcAt$(1%̫)RAR /`x @V{Rbi:-јjpJH]V
-JVRtU#("墕Ex3D\^1rT
-,0yCU<EЯ@x="+.
-d[Ԑđ# ByR
-ZGGY88dWTR9*jY'U
-SR{بBx"TV vefx%wE,'V%rY<d
-Rfy|Z(x'9lӠ	hY(tbu J0'	K$daЙታWf$R pDevfGZ`Bu![hg
-u 
-I) 4_% v^#fV*4
-ʳX0ՇG
-hԓ"8VOٰ"F!ƅ<ezĩpo1`*^)P$}Mu1EPɛDb+OWk,RV	lĭEOn'\a0"MOeaz46+HfP'>ȳ~v-h17d,<:if'XU`yM[GjʬR|I)	}ƽ5mYB
-^\Mۓ&LBx$%	~Sxc 4G
-DJ a
-,
-[=4rjjb5l<AsA%*;afB@*_<(e9:*RͶ"Lƥ<=@eiV 3bO϶)ќ[SH\֨	[>j;+46fhaǄr;f.8h WFQ㟏vbsŚ4%BxԆEV	X9Wɮ Q<2A32q
-][ޤ^a"7.,՘
-겿?g[=v6IpsW7KQmۂxănE	m7ӿdx>׉?Kse~e^I;/ 'w`XǢn8YbxxHzc	hu $uvWʜj `0'NF0	T
-Zl3 <N:bmFyJ$܂5@0TwcE`~#Y܅P=Jpx&t]cŷ,?f8nC}컲-n͆<Z^hdPͨyb>%eu	rV2}Yů'${?'2WB~ TU8G_.T5Ei a /5@Fp#'	R:gIN )ޤO}Aר3s:2M+"!b0?iUPD!=jg!#&$x@Ñ&Ϊ=C[?$PeLSVQe2%9^)D%ZxwvcAУ2	Hz,s4lIrY~P%蹱\!nG[>" qo;|<JM"X3/p% FrI-CUbh`~;;"+ԑ(4فF(f:rda (lD\@C,tC*5,v죒֒zo3tn[G+®+XޖW.6䵜]lەmIC
-J6opI  T<E9ꡞ$u "cxJd8n%eOB3Qqv6F7UBݏq(\9t+7waǃO6ʒ	^t >ʥU$.w&Β4-SyʢewOl!b/ML.PmǼ6Ri$혆+LF^>Y\{2t[Z
-ӵA,}Âr[\kZ|l7ki<sDHz7э$'38\զF
-وp"7@#yPuI4`EO_ B)
-G8y)0y;ZR+Vsjzj"R'-cU~ȥ$řk]:C,-bHl)ָ	}=KR*T<"='^2
->ϜX)xPN2Y+Dje%[\Gt9s,bHuO/3|󵈾=BPQ*͓p]C#8avAUFKbc$YG1SFDחkgݕX'_% dbnPjM;r[%nl<6/($pSފZ+xÂ"2xڻtա~!ޞdԧQꝅ}!1Oq;2@̫'z}Ţd{HJ?ԝ:IU)ȫH0RmEW
-BO k9I:
-T~n@?0j	OKy}L~q?#4O!\q8o}͙UuNNܵ[đ^|&XH6FڻJs:j(lҦS5B	j*|M#O<z'`73՜s><eAZhgc'$1djwQ=Oy0W8XF$|naZ,fw~ʴ9]h1ZgmAO@ͶKVQzȱ<_S)"UĄjH.(Y X-{-`nf*x>.ؤveG;#RAmVǙ"!@]H䏓,5?&_i&s"QIWĵ"Ve!pg;v~1ԧ'^Gn:jx*r}߹1
-k6lfC$<[?d1~P[{=>ec̲AyCZWR+|}N
-HQ i\}е3z(O!k e@ zL'/"uM̵N,37d-$H@S;V")\!>u5JXaGiխיJz۷5ey_ccag?P8ZG @o,Jʪ9l&.a'קyVg+GD[٘p+[7#nJ⟧nǆL5kdǒ&)RTmmJ\]tF qgI ƲYO`	~جQi̺|GʠF{TDRӔD` yd悢$H[A	UJU(X,O:ĸz)
-H	>^
-mk)ߙev4|.R2Γ=Ze
-$777:~w©w\t6A;m 
-fl;VF FBކ'ڴ%Q[#11,|Wٌ# n͊btBLٯr{=qcRvPYI:yq.zL*kez
->	ǲ w},{V5x;{,:rLO2m!eBܼ$?,lZfT^'BI ñ'qx5fRTl M_{&Bܯ\@F툔0Zo%InE^Ef;P4h
-/۫fZ:wefknYS9LYLm)wsyߚFNtAtӐ	ZY^$y_;۹'(x$5x/hq񔮝̛M<q$C˻6^[~f{'G'.}ZUo]YX)e%Nuc-nV۫K xU+Bʍ
-5N8rtHԳ;*ުܬrN%c̀O
-$}@!
-s!Y
-+>HaEh9ׯnCYg2#?1R&4-cR}%Lji3yE*GUo[m+H=O* =%M`-ڴ0K2',DyG}.}LjAuW]LvUD'7<lk<_n&;VgX%2.#M9vB3f.3IqVWpUAՏ/,B>Jy Z@@8c-y(%O>4^dMXCacH;;yo@Eg鸫G	fP=SRnlهսŪayJ>a^}4B"2]nܾ;u0{o8xcUDD=SږjYpԈ6uݥ"o.b(󩟖Ioؤ|TKBJ}Z]O+Q}>ňxbI:OL(#!tE rΫt4lc׬/R5EՇIkE5`]XjL5=JWj#=9bpc;[RͭÛ,2@*}?Rӝ1/*
-ٞ6m"mcrqbflq]$bmTےYnh˫p$*BXrmT6#C#%_# 2Aۅ
-+2<̾Djf=	k% M,LM~RA[JGYY]$jS?)-OB(BO^[>LW2 V{#gӫEdUtb۶ߜ,~:ܱH#)H$vY)ձxXiO&y!QP,nu4HYNRǕn}Hۆ,.CoeVmzU840b`W$y(cOH3w[xm$=-W/
-6'O=ȃVK0PIv{O$
-Z^ZxhKB*#WTEjxEdTD|Dу#:he4Y#0Ezlș%e\E{CB'i0drOr²yւY4GZ-0c!gwݕ7po	s)e+vvozT0]৒$=3T>F@7.6S.Ϟfn:&أ5։j L~QRx#F33WtSG{F+5D6T6/3TܐW22$h%MBdfau*j9OWЕd͐iPαfGUL5zy{f2~HkYil-3,RK7VBx#c2A1%k
-뎮Ye|M*%$vw%h-e`ٱ9Zr詎i{ĕKv:4)E'+֣L vTL/u/|vM}XʥjFԌq7=WtphG<O#bn kE:{R"0Fu<B_Hڛ)YgR'&<*&o<CD#fs_/Fp<XO~7y)A*x aem<|r=bt!,pGꮶC΂1$W;O,=ċ$
-1AZT/4bw{tڞՇ:ړ̏5dI'R^Z~:D3nf-<%~x",1N%RiR;M;2uXwwFxyؽ7A#]b]厳[*2clnL9+T#ƛSspEjJ ̤GiYǐ2ռckUOa ̊bFdڛ'!H c$x;}ZJLA^FFv<RY+pSA)@D@PZ
->y)H]DE gr1Wp+qE0,#/t("RcO,	HG&̒ȂN#c*Hl_,hk$h$[3$K4S=K7d0-;dv&*Ďf3b󪱤E/>dJu`n62ٸßղ3G/tR]U7YƧ1bKXΚFs$VD\l)u>~=>/F_u]c&r ESY+
-ujhjsp$R,+
-rcfxczKNeR\ RǦ2
-U9$ǊX#n:,*XDQ0ԵA#JδY_vV2ΐI:"k\BƤ^)Vfզ|)DU*[nmݝB-c<j&R[ 6ʕ%O/Nf8U)Ȓ%WWFzBcO=*TaȘ¼etZ8|-'OŖcn|9d2I0 wKDE]TE#6PprJ B/~DYY$8T2e!ڋՉXG
-'TT+Azjܴq)"9O^z}"/3N7E̒'϶Z
-43Wi sm˕yUYPAZjW,腻{V3Ea;7
-Dr2
-ǚ>ŸϚXGXy^?nUnL%Hq֛V)'P80v~	1'nX4|=?'0N;'̅1H۹_Kz<S^Az4x udUڑ*gS(GԱK^ҘK<]2HM<ͯPqܗؒɮNu#_`O)EfV[
-A 2] Q OopfP锴t}JVWd?j`doo|E[_KvG|bڭRzOAJ	'M럖.K'd`x"|5;51> }(B ̼ &S(߷^[=r'$DӅă*H?j7mP
-4S_Pkn$-#Sr#$b##:+ķB,hZ%>ܿV/-B_JZ|V nEݤPhD?!kHsn\T8գK^:y*vPcXpܥ%UG-^9tPR2M<ԷVxV&98+-l{/lZzN&<Q{{z]^NRZَKd<
-w<"W4Pu>>}y,{Ȩgo$\ȁq\7B Щ&g4cjtUi7PG4PF"yTb*ii[k:j/2蝽\}1?{,r5EGDR>nv!#YB̵e#YJE41ʁޒLH{k#v:۔K[9Oj]E^&vۛU1%&D6w;sR.KC/BSx*JөF*GϴjY_N#loޙ8on?;"#;nVq%\7[v`so;l/6ԩcFuEEb9$7,M6.hP/:b.nUķZݿUPw)SckqW4zF
-N0޹tǜ˔6_U&ͧmd;+k)ԴͯTEnTEgJ =W̊<\
-̽*8*
-ZHP)׆W38573.M{)vی$d٭bHo|~g0oӺ`6顑-f-6΄E*Y8?Yb6iR4>gxs~}ŽsnJobR%xu!J^(`GO?`}dsUԯĞYyQLawV6Nw'gxmm%[t
-7Ѵ&nmVso_n,CH1c(ӹ/~t;Z%YZUwx.I>HBWktۙ+3{ $oM6s?vkmm+YiGJpׂs3d$s/I]ǋu8Sqع@V*AY/_B)*A^_"{Tv۴3yb82bv稻 $YCle-	nJ<7
-s+są	3
-43ʖӄ#4fI} HCwW[Ogd-'P?0JfՌ$Xݨkp]N,5:զ'iչJh-aݘ|^2&>YOPm-qd M$`QAᜣ3R;vg(+;	&ǖ[%Y}~Tc2-X\XNapek쬌UsrX*eeI.uPA49T^n^>a'4
-'7r nopMR޶?s;NDL4QZi'Ύ:"'dW?sfLlW=Oғ,j\t/PM
-C36KtـM
-2y@3PE^bɚCc"4uwR<1 b^gӔ~9rמHj$ˍ`c@Ӥ.gٙ꥘gԑt*:˘h)%J;%[Ǜ{K2k Av+ݧKsC,4r1-wJTɾ&'na٘{5+ӊ(y1TݦqC
-ha,Ujn].܂[HsRLW:X^|P STy TeW;ƷËR	"1>1WjnJ5gK"sϩOX`.]<_[%<;&ıwf>/S	VN3@M+*YbCĘf3	Y'
-"Սu$حf)61K+]yZIz8ᠹ@H.mQN9<[c[r{Kfj!j)X:y~fҽ
-_6Røq5
-C	Qְ6<t1\,~9a,1h8_۽A*6h1Q<k0Oi=<=I+XX*TzlI#Fm#nࢱY)'FާXpu)[FNDA&F@eJ\qbEjՅb[@<970t,0M+bL8JGs~?v fyC$Ddwf~  O#FAu:q\%?˷TTZ042k"bG(ƪM~	opxF3Yhr0ݒ;r#+2ÖȜ}g8DnyIl,Hi8
-nr.mf,笶uJ_%7{Mt'\8R5+S*2͓z9>>롒|MI6A/KK_MC/c!%)$GQG	(qϑ 0H# 햰{<!,!JXjх x~ugpAmN6Qɳy&z͙
-Z!'WO-(-{),KvĖS[@^IrbbSxIl+Yc`Hύ%$rҴ1 Fi`D;8R#>JHRUkIWb	\[TWi깒$)%;\:SfyfuDym;\O
-#{ϕiյ{t%8sv`H{2d=yq* wu
-pp?M2.g(lEY6 ?8rH+k!5Rh#mr/{EmfR.`K&[l[	}3*J XA$,ՐAXo!B
-np47nܷʏn+V{:gI#gmǎ	FdY
-Zܥ}ZY\wJsX콢MuCm-"sEǅ*&8
-jY%RFknfmRD *yr䊦^l2{uA
-
-mz]e1L.o"ӏuIؑ3Pqw M1ٳ%a+_=ѵ(樼"ږĪ5&`w)R;;mY&ƒ2q40MDl߇Xinx8ݜ&MyȀ̽
-u,c{jxX6f|`ti29>lMgsN٢߷wfN#-[c7巚g^,d:RZG<v^z}R3ÿ,a+׳^HlBż=85rLR+*(VA, 7}՗rzFܛ*-\2ݗbdV3<<:d
-j5Aw,ݲƒhE`~}_%LbgC_s5ߕu`L2T F   1!A"2BQCa 3RSq#0br4s@DcT  
-? ]f͖d/b]abRvݻJ츇LHJVEi}ֿQ-XO娆?uP	kYO"=e),%Hv[տEVZ,|
-[U,"Q`TekF?uǚHՏ-iVhw
--Gƾw^V޶[o:+c"ŪH#Sak< Z	V~y\'qy޿=z PŀΐG.OE=<ķUi?{n~)V,GV>NhD]
-лYF_.W7b@4Pk'JRGsj*[c
-v
-jWQ<+N	$ IH<H%ݶU`ORt
-ǪB1I5RMlH٘AtO#V<e$[GVR`iy.HervENT⍶ [ѶSI "$82k^XQIQȧΙn),
-Q2Ժ@pб]φQ̀ mlsjH$)"Nz}5$J$
-Lm@@Ҝg'R,<D6sF D	>|ҳaKOњ
-ptkg+gՠ)ċr$N'6Y[2P05O϶* Jun|B   T1aGǞBIQMp*cTRXI,hZ5?[\
-;]
-R ΅~/ήߪM'>iy< { |+p) 0>}դBT+c{D5[Ǯd	ψrY
-rqS:mHK`-e<*$v $3{S,N{-Z\5H
-sT){ʣcE܃g[|D<>os e0+NmNlhi_dNͺ
-::Uٴ#p!j
-i& I&aCMmԕ .{ԫSKj t4ͱ2d
-D4dZeA
-FGq\.PwKPPUԥ5j"uIrh" llDy;i'bXI".j]+8f52(`$
-mۙO%b~}5O$4)O=,Qw⊶-ɴN~mQB<-+O
- 
-@#
-I;}Ńk~`w<dw5jk=eh N4m揙(A (m)8F.Z`6sEr Q| ah ,ҟ.Ӹ|b NP*b
-J @1	@ҐDUPUHiY9VAtgedBLwOh!;s{GZX~
-^-_4.]PGt:rڗPJlݳE3F5rO =BL5t~U<+$v]7c6L|N[fka#tX(X]'p& n| )Z_{jEkUxη; b[RA@!YU0J7#jU * lJ@AV
- 7 #SD*hӎBXnz1VT%}tLPNjƏOp)pᘉӺ`<t~T#.UCj
-05z-*RR&|: ] z/MttIb]F
-3k SZ|>B-o_֫UbPkD
-1<@12)
-,B|7
-vC
-CvO#'5l$L R)L$
-L @ZKah.gR*wI;)5h(d8MHmM,j<M:9u)8>iV<@$%\Hڡtfu$J֭8H~̪qHhA{c
-:F{\趛PH>h![lǈ7<گnʢU.0Vj:#fZh9P. z/HFĪ$$-s+1AY'SȫlZX[h{rMw{ Q
-̀@8oZKb85(T}R$|UPdX?U.[oowc %Tp`,8`P1}|z~g+D.yٹB.ϯCjQI qt\'|3liX"j PA~WwUf]$쀃~YӳbIVI?N.6霂-n}9InHÔqI$'*xO	$ rL@L#^H1<{0cm}A	Cz}i:K=ܾ)e;]  m+@#>
-UNʜ(b3:!Op+I^
-z߷8F@V(O7|C& h>]$f>M++FvmTlF!AFűgbKk>EpWP7
-}U<RE.7'rIȫ1r7)8;;"d&B81Evr\lwjCII`H6S4.8,\
-[E!ʟ
-J/OeblD À=9bL6@ߪCXؘ݃p>]) Q]K
-gS/rxQwի= w=uΈ1~ 0nbrui5m55Iӑ1?(&DЄ@$I"$PbA&|*jn:PJa|juxhVmO4l0+0)p0ldR)"D ϖc  
-FTzk.@RݰIal򿏐i-  ǻlف<m
--ǂX7z=gyK#Z므w6I	]zUQMP,WD|"hJ9y&rȩ0}_a( !-Kër5l-S
-3hă QEK*dFHlRcPLYgr;c˚UTLγP c 1$#yU%u@|ZL%)ܝ+kv0AeV  q4Ð>QHÁ">U mx*rD(`@!` qkU=d Mh>MfoY'\j@ڵOp &:׿L
-8Z,6
-zMExߋu"tDʂ
-x؍N.&Т0^\@C*w:HQFSZdkG	k)2%6Ns8yP`@M)yd|6fUaQ>J˅
-[:t*%mTN:q}4m>-6&VsH4)`!G 	9$ā3DY  慰 B 1Ce4t$cJ xޜUJG86pK HmDd6HR0__ou(4$4x,+6
- H>%eZ }XF
-6ID
-	O)Lim$xr m=t1$	_OK CoZBARU^.eWIh T+	p9rPU@l|AqbH?n\b>Inin0;.1F>Hhrm
-	]ˑ mj>zn u5|O:6
-m\	 '%
-PLAO$l6Ce0褂!@Hl4jЬyR,
-k)Z$yY.hKleGylC
-F})E`(:^Nt
-snBγ6>)RoGj 7[?
-9 @܂&UI ذ V
-}؎iĒwpF*qrW?R[;{ɓp62F6$>i
-3+Zy 'Q70u`?S9H'f H|9S:Vq3!	#s0AQ=9c!C ':yf]9X$s`J`HeF]s\|P4bA dHM^]a@TtRaY((1\
-ۺ0m`
-IG% rj Fa{=CH5Aٿ,sLI$%I)k$Mdj͟uPt<DAmRlcP5A'ZR.H  28.@*04ԵN0}E%V	+%H٣#q|u	`NtLs@8$SJ1@<Y gV g$+g@8>'q_J<i!H3#u{]b)`ey
-+
-X*ۆ@>A'DyyXGQp7P@F~gzLw ibd&:J ѧo*w2Ɩ` b=˵:P:ͫ
-+4ԳKE?6g|6x8+D,CdyVs fv,d`<)Y; I8kp gp$pFO  
-laO6 +y	9]Eŭ]Xnrߏ|EgX3,OV
-cs> A6G( 	X,~A/Oph]9sA739@ro	E
->1$lgb~Hc	ܯAh#+С@!nv>Q9y
-?"Y¦6u*=daxrァj+&
- N)У\.g42Ƌڵ8PY.l0JRsarS)c@]84
-<uAJ*@N|n6sT\>jo
-ɞ8bw
-$~n
-A_?-}\ͱsVohkE
-}y!2pɓ8F5
-vmWZ OƐ	~ ĨRBk|Va*֣bjb	 upVcWd 2"6]anN{*X(v 0L=NF>`xE!JQ;S40pI6oKZ0r1d<jݞZ]յ7oOQ7&?M0mvT*ɂ5}46Qnt3	fP-?$<e[$FO'!Lwrshe;Y_8a_?W6>bLNc;>jk)aF(d7JĖو^"NAB4:ʂ6>j+)2fm`8 ҧua T([ĬC A3L@D s)یְMβE-ȿK 9;GҽZ0H2Hsk晉ɚC` 0wm=;0 LacsqAXdLeO
- 
-O<;(Olߒӆ;Σo!6U	]:hһ\I94WR? cn(el?`@"ڇB<]oY13>A[$]>.(Nq=C$!{6<$z3'%Nz6=*G0E5J4ɶqheyb!\lBdM].:L I+ E],&A%zwPH's1V:chkQu:͔Cʘ g93>X  WF<oqL1vxqyC,F 0w_@P>`-YxF*ÐA>GruF$96m?()a0ukBW76 lۮGy-d*)}`PWX
-dT6Y	Q#4D蒄NP$5:K	 pE!B"X[ X00GRJ5۠'yZM* 0,g-Y' r	F#o- 56#|GFkG%}_ =2 c<WF6>d9,=Nx_ϕz_'z`ooO;s? X(: <]V
-jS$6_] XLy2+Rq3 n{v .{`
-4,VTrGW]aPcd{>$CJKQ7r	+%g%_ggmp6V;/lmOǽ̃Wׂ~FWK|9	B g[a_>n#
-fϲ50A$cՕ&V raH *{ɩ'$J톕A sD(
-hf'6j<`t:yZ M.-OD-s iZڰ,M,}`QW	$]b8~(1$BuS&@$ln@^KOߪ(`J߄?*ct 5ڑ|wJF&2z1t cr՝>'&M7Rm-]QpԖv 5荙nK C(2Ű5u9`WZr}\y[
-ipjnـn}V"ZlYkfpb]~WA 	e{Z'$/[ T	 ȠH7(܆p5	 \>"T`yFSJG,mji Ͷ˷H\8l@
->6Ițdlӫ^I͖Gĕ҉:ȃj1pekE
-p,<XڑkVicwC]t| *VVC
-#=m?gA	 
-?B>/0˅=Z)V7
-e2wDmL^ 뮰\/Be	+g^D`}gߖ{0J~kk[ob GGՀwdxJ	x^61(1u- JW򧥽p鉳IpcĊ_E!_(񒧐*dj{/j7^tMӐd,D$ef)]jL'I~ETQ!t'
-NH43Ac	M*;0ׯ4 $, z6**09#@4@&,󒓵hAG>8
-  LqOT`Hٛ"Be@iT0fV6j;}[!zh%gC\);@\]A9`wj\VVAHo_-=/[!.;Sm6MlB\ ˘`*Rm,̋{5	.[*pЩJ"6#pkY_egn\Wu`nvJvS^##lVD5XXJy.P­t+`rHmpخA\]uyh'k+OA.Peޛ]ͫWWu{Jg6Z^vcQ`{9(:赳.4i H`"}4k^&ITI; 	bU
-t@qNQRh<ZtOc  ZϩZAm0n(ڝ1`a>nm0%<&W41FrI:+\{]fo1)'@=Vj*xBWX5 }Alڮşsjm]B4*n!?[S
-줠\L%]չ#FڈA<[ c\jA{6P3+D[]RjAz΃b)ʤ[NVJmHH n}AF]M6^Xm+5ez[3pC<E =hX]az[ Xs!S-[~C Qo|sʧݏm	~H
-@qC-G'cUr že<K頀=ގ
-4T>vjҕ@6\  rխ^b*:SN!CdBɢUiy0cA
-:cEP( X@KINH"
-,m,?w fJ`pi$\OE}|FIڋJ#3蠄C~( eQ*>U4 #FӔv0="0>h>n(T
-{Zْ۪: 1K7.Q!anwr7Uhx@ݹ5v;f|.AF<nGJ!6:uuPoy&[_w圍*VC	=e;2O-%ԩ%SaxRXcT;b
-8sc]&  IU$8Sc襁32Z݁2H只4HR]I9Ґ5nA$10_oam%UǦ.`X쌭ܓI(1	(͖ݲIOiHp	X]/0dcMDB#VUJp,yNb47"읮YzwDH ~4-
-@#G'hٸty	*쟒>WO121j`Yu	A"1fY5Z7aE#֫uZ4>V&PP`BN 5X
-؏R,hB
-l.R	#QKh7g4_[5 1 3VեMdE2(qȶ6e7(m{4o=tj#
-:A܁;P8 i2.O,%8U3
-D.908AUP#軨W֤J]J&$/o֝BA`K0J}g@->|Pfy6_Ggׅ
-3 ; &0wM<74B+"T9<*WZst$xyM"&#Ia4ꅈi#Z&VAgbm? A;0ian&,3mWOK}ĐcwE) Aeo$i)kk=RmRvahi:t騨/s7سcXkF\OɭK4Ak.A Q**	Λ@{UOsAY" SeHGe9A-~M[8goP\[[{jT:Bu Euv՛+
-nNڗcu[+YѹveRszO&KVZyn/<7 'Q_c"
-
-d9B:<b܏=F۹CoP6d.$ZrI
- $  #8cKLD(I  Oļ @[Gr	
-OYFP	ў׾`ΤO`mL­:[V)1jSOѸ,6A |ic!b+um`l ^R3)A`4:r5΀yfFR?>zr%Rn%4WZuD ｻgviuE[	4x(yJB۾h7:ҒH$*%]וj9?m2&TʙSڃYr
-svg+ܒiUձZ&eI"i*'&km% $$RcZm˼aB{'9rF~ހjwF>gQEa(!ig33 ͖hW<E[\]I柕>NCWxpErOQƚTfmkPΪ`cq9?Z﾿.:wu 1y_
-\-s*4K#|Ni\+tu.dj=inۋ<,v-=i/'OG
-ł8@Q:@m3b_ӐW 6uƟj U!ҋ r	qyRX& _@J!j;9HRӺjw-}Q]EM7zO($E WZݭ*U,5
-9Sg! sJC:N)H pDqG}<,i*	ƓL4)-;Qul	 
-e¦?
-^URă4,̓cbw"OJ2
-BҷT
-l8<%`iA{SX⮣+n}~h ]|۹c0>[m+quHٝnkCzӦdJTNT{+&X=M;^(
-9;RhOA@%Ǵ,6@k@Aew+:+	ꮻ;۰BhG {f	4~,.>
-hfs? >j@'rWIJU:7-F)XcW
-cd)rJhrE Xt{w(,|jf;RIp|ih/%Np
-d7SWQnoM8GsKiٖ)\<x f+qҸPYI$	Zm
-v&7Y/Kh2Bw_WnW.o*PXUH;#3u[)ږַ6nם Y\R7sߊ-Ha]c4!t
-kPdc
-6LB@uO$P$	6v$8O6ѴTv84 Q1+l iܸQ縎%I|e5{D-:͊mwWE4
-Wy%ҖEU͠$ WC=%@!er>)]4	\L?`x5ԫ?bA` H>0vwGڃ!@nK6<_fWE{r!xr|
-X܀8b_ͪ*
-q+f^VprT5WN%Xqp T:Fk.zHL$?F1WJe٬]S'/CڴIfA^G{fF%B.yJ]a殳gl; l|˧
-ˆAIm1mkX{hiaS숎K,7 H8,g}&`vm!;J(#}ӆBdbқgb	mL٢ŝ(74pԾCn7v&bǱ0кpmS&;(k,|((* Lf Z{ MDpb/V4oP
-$f
-2,uIǋcMvoJذ
- 6i}շhWVK\]]İ +'Z{GVyWVVn_o3
-2ڳ#8b@?qH%^'icDgpw}Dڿ7T,)ܬkdz?	w& b,q7wg#F(&'sTt(dӔj7; mt!;1ٸal-gLl&A,ݶ7fnY7%җxm p"ehSXaL0deVAƂ|oM%76݂qsW[ɲYA(=cz\$šW$Av[C v+qAP[5
-ѹa wGɂT-`9 ł]'F:n,BAb̅n.UB:Q X3W(Uo` b>|{PKmͱmRw6wȯ
-Zݼoͻ@7
-*Ţo  ~
-i_.% DHj͐PWvuLQGa,=EtG)kҤ]gk6".\s7m b㊸ p\"GIűs]SiWNo(=x̻
-IzCh|ͶͥS3"$~`tqÏ	}3W7TZ)t @H{<cdim06Nm18K^v72BXwֺ}(ZDxe2OkUmQIv70:D(I(+ZgNm8R\r7*tݸb_	J\r>XptAP"b[UPUE=α˦: XV]٧kܽZk/tJZnlZd@1V`wfW,]AbL+pߎ.U ,'H[Yq_kt?"-1 ;%Bnb<rR"5m:uc=MT܌oAyddqkךRF/ )-?*i3[Kvm9[޺ouH:mxg"KvȾb$etꪪ
-.ɩ-&^HR.
-Fv6p
-3v(6Z$(i3n) lޚu]w{NvPXxZgzR][3zK?6ZRUس}N^t
-sﱝ$Wzņ8^ơKϺ<_FI}$绞(S.{R,°'4w
-H/H%JT}F3!(|8,`8&oZJ:F :q_{zC,yR=ɦ$	%tB$JYь@36ǡiR3"Wo([H0vkVnIGC+0k׋A?hhq[dKxߩWQi@!ꧺnlRvU:
-?oKP	@5xK	5[=XI=ԻjAN ΪT?!WRl=	R,GiK(ryk`ouȮ<[	Eufqk ְX}{>
-؂tiWݼ*j2gѓRCwnj󜞣KիiYCB*NpT1UPz[l2h7Z򾓽]#ν&yi3hU9r	 qeMbt
-0ala])t[IxrRd@-3';I=L_PGwgVݴ'CsB&< -#6~MQF ,k\I64w;54I3S,XKl!A67	SAAdgKH$}zl
-yyIGo,b`E(mIB`3+m2.\&▷K#PכG0tgA`f]yρnM(Ţ> *٬Wd*.@+6ONը3U]<!`@>!xÇS Y[CճJJCĨ
-L$UxWH*#(rM354A0wx# Ѷ@ԣi휹+:awi:sjs 7meI~}gRtI	 '21t浒-N|a	$ߜqIlZf+=2᷒n)uoV`wއ
-ݽ:вvAo̚ʚ;nn]6yoa]&l3x#OQP̢	 Oa
-l2դg0'c]Ik<CZbF>^#V'O<D?l.VI ]#''eH>Uշh+	f4	eS C_` fmMeh"5$0??amX^GRɸ?z6} u 2mzzʠMˈ%'bb3Om jvQhc's;|G?skO'*&#n 30"c4T! $fBr+Pp.HhĎ
-  zW[i`aZl* ] `$9sLP9A:Kɸ
-";R8$fI!1$?_aX`8NfuOu6uxOEʋ!=}F!Ap"<P\WkͲ`lϬsFf-D3q~G)|Ko'H}
-t<Yh:8ѫ~8?_RKX?ӥ<Dc&b$4YMO÷~(vn}D@Hh526$qSbf!z106$~=BKv]Z*8=lMOIWQ,zT:5|aۈ $49Q"|DH  8Ui75lTiތ,(cǗWIi:dM7iogf0	 Ib	< NXːFq?3ҠG[@$B:w |Aq<RtHx8Ic]Cc%C2 e
-	&(RF(( 
-	Mp-iQ7Ӯ1;Q"[< "['c<$71Vm5XZ2}UuA:̉$2=&Eb
-*[}2J64NR
-ó9A$RҠOLx-Sm ;S]wD6~%ntm!-߸.}#h7jRu5?v?1@N 90y*cRvK$$y(Rtc]0 +Q (B?K\s್;\kmŋݶami:rznɁȹK*( Fݾf7p5}`46/ AF$LĻ}׏o?S]M]̇eʚ=Yx]G#w[ͶT5 #}?Y $Ҥ\PpnX]XpJAym.aluī}-.2^fQeP @*Agq6( d[衟G A")WS)Zo#i&]g?$(& 4B3Bb|/)]%׻K8cZ,<Fw
-I}<pLUڸ!7lP?͋aVȼ@oῲf0 $
-JBۇMNF$pHY	&KI'$I8 R\)gE;*
-@z?O&IpTH5uCQӲAᶒ.bWM/W=;`՝m|&;+rLҀo8&^Sy,MKtCq.ځq#T	?[|:"QKݾ%4bu/'kϛ
-]fSP?9n
-c?{'5Y(A`2Mu}+T*mjp/VF$ ޟR
-/.u΢2}شZl|4ձ>=~?eDv
-{k-vJۦ +8w΍YF*,'u
-0
-Oí)S?d8./@ ̢$*+W:U-ٖ:i7JU Թd=5I5gի-B"is-Iv\]E wCXݮ\rtoCR/ ul+:նӡl:*k'aQhP>6oJݻ#'@`8վxcVVc~
-(p 8H[l_oZQ
-Q]kK.f7?]&n^ٲ7se˓jg[֭\|p|ہyɅ=mlZR JӃ4eCU-t,ܴ:?.,^?r+aOEkO(f:jv¤v06KD!ّ3IʩV&ŏ[CQZ+=ޮңD;W
-?sEܺUHnHbw$S5?cou ر[e;rߢ RVYBȨoMۢ{fo2UOh˜ 3g @BG')4 *
-?&BVy=O>Zeuv xtiMm]YPsmՌht%$vu
-71'Ǫ 6RgBXI=ˎ
-.;@ë!؂Wx4]uW.v(]
-un%$}u@ImۓRWKwqae
-֭ ?m<` 'u>oWh۵:}X˱H?+@4	R4/9U
-ܶ5tt'(s:8jܳdsza]8 髺-m{
-!8Ҥ3b޶nnj雐wnvQ@3}=dL κ隆H76_NSD*eܴw˚Qzʹ&9+VZrZo(7
-]PKi48"
-tngZHΪA y ^,XVRKѕ$\X`A'pkZb>}RH~}>e8oW:KeNo<8_[>RukaINwAX"B\Y9YAB swmJ.~f\vUjhe1EHȭ h `U֞`l&N%AH h,Uw$MGf}s:;^x20	4X_q1n[lѸ.mY
-pp᣸ùyՋߕ/m,m˚7;*B,]d|QgRe\^ˏOm[~gt7@#:m8]:.75|w4`gܽwwbf!Ef`tĿJ	q=\qbةeB.mR7HkfٓBsfiPhy.muV'XQV
-
-92Uyn)
-"g-3xɲO.T敂ͽez+P#`mx\:Q!wj~HNiNJ\$>l)m:,=cϘ6;roRL~rOԜuOxZ(
-vǛ+dj%-C\!?bm'`>cդ.G蝐@~=3P9nqnwMDw݌_ .Z)|uNɀqL)kXZeIbI?hQoܥ)ј^~Tw|
-Y/u;+wޑle(]Q{qr'g7v"P>OL}winF% aJ׃H9&W;VU5o}WQR<s3lc(ڍ=:|nxS>]gkWP1voH[h67A;jġPqpb(
-  ` w] R T+-8uV$ WT҂fa܄n@+p(l{;^عu]tFq׻ytӛ5nG#2qqL(܃dQu,a$Rq;-'-]rKymz.ʟXzק]AUvb* qЮnx|˿.j.e/nm]߻V=[ւ7l,O
-wؾ&	 h$*DM.C:Iaͦ5 H0b+6*9oCY$Q^ou UI 3H<Gw,4;
-X׍oW:_ñq"ض\Z<zR~g]\:^3  @l:7;}Gyƫ']j_#7meTz+tf_-lVN9h],@#X;wFN\C{	SԂ#c6,xrA@G;2%kSzڮ`9a6HWl=FRU8|֏&[)ڲ\Ǆ凐
-lnH1 '/y:[ ͡f{S;?WZ(;ZW	u.Cz؃W[SӒ
-Ơ~U4K) v cbbH9)%y 8QZh$&-e!iVS:8lpl@@\`|˚eY"-
->,PQ  L'a4Wp-̫VU2+
-	(fY0\ئk mhH70S--e٣{yZ*j6;}ɇ#ToLR
-%Z%A@;\pJ+l`tfu4  Wi]]_Nދ|CIS۸B*k;Ep \F"eZ@ؒ~.[K&79}Ǧ`ẢPӵŔM$ol Bu-WX!M IjoFs-`/+u
-[?[͖^@I!zo&{B 
-]".4^oDeA4DJ	$Zl\F$|
-J"}
-E?aq?j.{ r(։RY6oUВb@lWZD\F]y
-8b?ISCӍIǛڼ;pO(_X(.2n[M}=C	i;I&ll҅;lMy/B
-*@(]-ۈj~ ީ5 b|kqtimV                 ? /?                 ? /?
-````
-
---- tsconfig.json ---
-````json
-{
-  "compilerOptions": {
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strict": true,
-    "allowImportingTsExtensions": true,
-    "module": "preserve",
-    "moduleResolution": "bundler",
-    "paths": {
-      "~/*": ["./src/*"],
-      "~~/*": ["./*"]
-    },
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "removeComments": true,
-    "allowJs": false,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "lib": ["ESNext", "dom"],
-    "moduleDetection": "force",
-    "target": "esnext",
-    "useDefineForClassFields": true,
-    "composite": true,
-    "skipLibCheck": true,
-    "types": ["bun"]
-  },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-````
-

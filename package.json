@@ -1,16 +1,20 @@
 {
-  "name": "hono-compress",
+  "name": "hono-compress-experimental",
   "type": "module",
-  "version": "0.7.0",
-  "description": "Compression plugin for Hono working with Bun",
+  "version": "0.7.0-experimental.1",
+  "description": "Experimental compression plugin for Hono working with Bun (forked and modified)",
   "author": {
-    "name": "Walter Purcaro",
-    "url": "https://github.com/vuolter"
+    "name": "mustafachyi",
+    "url": "https://github.com/mustafachyi"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vuolter/hono-compress"
+    "url": "git+https://github.com/mustafachyi/hono-compress.git"
+  },
+  "homepage": "https://github.com/mustafachyi/hono-compress",
+  "bugs": {
+    "url": "https://github.com/mustafachyi/hono-compress/issues"
   },
   "keywords": [
     "hono",
@@ -22,26 +26,27 @@
     "zstd",
     "brotli",
     "gzip",
-    "deflate"
+    "deflate",
+    "experimental"
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
     }
   },
-  "url": "https://github.com/vuolter/hono-compress",
   "scripts": {
+    "prepublishOnly": "bun run build",
     "update": "bun update --latest && npm install --force --no-fund --package-lock-only",
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "build:minify": "tsup src/index.ts --format cjs,esm --dts --clean --minify",
+    "build": "tsup src/index.ts --format esm --clean && tsc --project tsconfig.build.json",
+    "build:types": "tsc --project tsconfig.build.json",
     "test": "bun test",
     "format": "prettier . --write",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint --cache-strategy content --fix .",
@@ -58,7 +63,6 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@types/bun": "^1.2.19",
-    "@types/eslint__js": "^9.14.0",
     "@types/node": "^24.1.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",

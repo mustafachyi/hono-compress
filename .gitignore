@@ -179,3 +179,8 @@ dist
 
 # Bun
 .bun
+
+# TypeScript compiled files in source directories (keep config JS files)
+src/**/*.js
+tests/**/*.js
+*.tsbuildinfo
