@@ -43,8 +43,8 @@
   "url": "https://github.com/vuolter/hono-compress",
   "scripts": {
     "update": "bun update --latest && npm install --force --no-fund --package-lock-only",
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 pkgroll --clean-dist",
-    "build:minify": "NODE_OPTIONS=--max-old-space-size=8192 pkgroll --clean-dist --minify",
+    "build": "pkgroll --clean-dist --external=@mongodb-js/zstd,brotli-wasm",
+    "build:minify": "pkgroll --clean-dist --minify --external=@mongodb-js/zstd,brotli-wasm",
     "build:watch": "pkgroll --clean-dist --watch",
     "test": "bun test",
     "format": "prettier . --write",

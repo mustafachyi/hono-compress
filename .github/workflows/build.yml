@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-and-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,8 +36,6 @@ jobs:
         run: bun test
 
       - name: Run build
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
         run: bun run build
 
       - name: Upload dist artifact
@@ -45,4 +43,4 @@ jobs:
         with:
           name: dist-node-${{ matrix.node-version }}
           path: dist/
-          retention-days: 7
+          retention-days: 1
