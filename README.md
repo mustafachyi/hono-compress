@@ -129,7 +129,7 @@ interface CompressOptions {
 
 ## Note
 
-This package is an experimental fork of `hono-compress` with modifications and additional features.
+This package is an experimental fork of `hono-compress` with modifications (mybe ?)
 
 ## License
 
