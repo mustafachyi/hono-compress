@@ -1,15 +1,7 @@
-const brotliPromise = import('brotli-wasm')
-const zlibPromise = import('node:zlib')
+import type { BrotliWasmType } from 'brotli-wasm'
 
-export let brotli: Awaited<typeof brotliPromise>
-export let zlib: Awaited<typeof zlibPromise>
-
-brotliPromise.then((module) => {
-  brotli = module
-})
-
-zlibPromise
-  .then((module) => {
-    zlib = module
-  })
+export const brotli: BrotliWasmType | null = await import('brotli-wasm')
+  .then(async (module) => await module.default)
   .catch(() => null)
+
+export const zlib = await import('node:zlib').catch(() => null)

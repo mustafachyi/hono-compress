@@ -38,6 +38,7 @@ export default tseslint.config(
       'perfectionist/sort-modules': 'off',
       'perfectionist/sort-object-types': 'off',
       'perfectionist/sort-objects': 'off',
+      'sonarjs/cognitive-complexity': ['error', 12],
       'tsdoc/syntax': 'warn',
       'unicorn/consistent-function-scoping': 'off',
       'unicorn/filename-case': 'off',

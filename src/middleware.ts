@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono'
 
-import type { CompressionEncoding, CompressionFilter, CompressOptions } from '~/types'
+import type { CompressionEncoding, CompressOptions } from '~/types'
 
 import {
   ACCEPTED_ENCODINGS,
@@ -11,85 +11,84 @@ import {
 } from '~/constants'
 import {
   isCloudflareWorkers,
+  isCompressible,
   isDenoDeploy,
-  shouldCompress,
-  shouldTransform,
+  isTransformable,
 } from '~/helpers'
-import { zlib } from '~/imports'
+import { brotli, zlib } from '~/imports'
 import {
   BrotliCompressionStream,
   ZlibCompressionStream,
   ZstdCompressionStream,
 } from '~/streams'
 
-function checkCompressEncodings(encodings: CompressionEncoding[]) {
-  const unsupportedEncoding: string | undefined = encodings.find(
-    (enc) => !ACCEPTED_ENCODINGS.includes(enc),
+function validateEncodings(encodings: CompressionEncoding[]) {
+  const unsupportedEncoding = encodings.find(
+    (encoding) => !ACCEPTED_ENCODINGS.includes(encoding),
   )
   if (unsupportedEncoding) {
-    throw new Error(`Invalid compression encoding: ${unsupportedEncoding}`)
+    throw new Error(`Unsupported encoding: ${unsupportedEncoding}.`)
   }
 }
 
-function checkResposeType(c: Context) {
-  // NOTE: skip no content
-  if (!c.res.body) {
-    throw Error
+function findMatchingEncoding(
+  context: Context,
+  availableEncodings: CompressionEncoding[],
+): CompressionEncoding | null {
+  const acceptEncodingHeader = context.req.header('Accept-Encoding')
+  if (!acceptEncodingHeader) {
+    return null
   }
-
-  // NOTE: skip head request
-  if (c.req.method === 'HEAD') {
-    throw Error
-  }
+  return (
+    availableEncodings.find((encoding) =>
+      acceptEncodingHeader.includes(encoding),
+    ) ?? null
+  )
 }
 
-function checkResponseCompressible(c: Context, threshold: number, force: boolean) {
-  // NOTE: skip no-compression request
-  if (c.req.header('x-no-compression')) {
-    throw Error
+function createCompressionStream(
+  encoding: CompressionEncoding,
+  zstdLevel: number,
+  brotliLevel: number,
+  gzipLevel: number,
+  options: any,
+): { stream: any; isTransformStream: boolean } {
+  if (encoding === 'zstd') {
+    return { stream: new ZstdCompressionStream(zstdLevel), isTransformStream: true }
   }
-
-  // NOTE: skip already encoded
-  if (c.res.headers.has('Content-Encoding')) {
-    throw Error
+  if (encoding === 'br' && brotli) {
+    return { stream: new BrotliCompressionStream(brotliLevel), isTransformStream: false }
   }
-
-  const contentLength = Number(c.res.headers.get('Content-Length'))
-
-  // NOTE: skip small size content
-  if (contentLength && contentLength < threshold) {
-    throw Error
-  }
-
-  // NOTE: skip un-compressible content
-  if (!shouldCompress(c.res, force)) {
-    throw Error
-  }
-
-  // NOTE: skip un-transformable content
-  if (!shouldTransform(c.res)) {
-    throw Error
-  }
-}
-
-function checkResponseFilter(c: Context, filter: CompressionFilter | null | undefined) {
-  // NOTE: skip by callback result or if an already compressing runtime
-  if (filter != null) {
-    if (!filter(c)) {
-      throw Error
+  if (encoding === 'gzip' || encoding === 'deflate') {
+    if (zlib) {
+      return {
+        stream: new ZlibCompressionStream(encoding, { level: gzipLevel, ...options }),
+        isTransformStream: false,
+      }
     }
-  } else if (isDenoDeploy || isCloudflareWorkers) {
-    throw Error
+    return { stream: new CompressionStream(encoding), isTransformStream: true }
   }
+  return { stream: null, isTransformStream: false }
 }
 
-function findAcceptedEncoding(c: Context, encodings: CompressionEncoding[]) {
-  const acceptedEncoding = c.req.header('Accept-Encoding')
-
-  if (!acceptedEncoding) {
-    return
-  }
-  return encodings.find((enc) => acceptedEncoding.includes(enc))
+function shouldSkipCompression(
+  context: Context,
+  threshold: number,
+  force: boolean,
+  filter: any,
+): boolean {
+  if (!context.res.body || context.req.method === 'HEAD') return true
+  if (context.res.headers.has('Content-Encoding')) return true
+  
+  const contentLength = Number(context.res.headers.get('Content-Length'))
+  if (contentLength > 0 && contentLength < threshold) return true
+  
+  return (
+    !isCompressible(context.res, force) ||
+    !isTransformable(context.res) ||
+    !!context.req.header('x-no-compression') ||
+    (filter ? !filter(context) : isDenoDeploy || isCloudflareWorkers)
+  )
 }
 
 export function compress({
@@ -103,49 +102,34 @@ export function compress({
   options = {},
   filter,
 }: CompressOptions = {}): MiddlewareHandler {
-  // NOTE: use `encoding` as the only compression scheme
-  if (encoding) {
-    encodings = [encoding]
-  }
+  const activeEncodings = encoding ? [encoding] : encodings
+  validateEncodings(activeEncodings)
 
-  // NOTE: fail if unsupported encodings
-  checkCompressEncodings(encodings)
-
-  return async function compress(c, next) {
+  return async function compressionMiddleware(context, next) {
     await next()
 
-    // NOTE: skip if checks failed
-    try {
-      checkResposeType(c)
-      checkResponseCompressible(c, threshold, force)
-      checkResponseFilter(c, filter)
-    } catch {
-      return
-    }
+    if (shouldSkipCompression(context, threshold, force, filter)) return
 
-    const enc = findAcceptedEncoding(c, encodings) ?? (force && encodings[0])
+    const matchedEncoding =
+      findMatchingEncoding(context, activeEncodings) ?? (force ? activeEncodings[0] : null)
 
-    // NOTE: skip if no accepted encoding
-    if (!enc) {
-      return
-    }
+    if (!matchedEncoding) return
 
-    let stream
+    const { stream, isTransformStream } = createCompressionStream(
+      matchedEncoding,
+      zstdLevel,
+      brotliLevel,
+      gzipLevel,
+      options,
+    )
 
-    if (enc === 'zstd') {
-      stream = new ZstdCompressionStream(zstdLevel)
-    } else if (zlib) {
-      const level = enc === 'br' ? brotliLevel : gzipLevel
-      stream = new ZlibCompressionStream(enc, { level, ...options })
-    } else if (enc === 'br') {
-      stream = new BrotliCompressionStream(brotliLevel)
-    } else {
-      stream = new CompressionStream(enc)
-    }
+    if (!stream) return
 
-    c.res = new Response(c.res.body!.pipeThrough(stream), c.res)
+    context.res = isTransformStream
+      ? new Response(context.res.body!.pipeThrough(stream as TransformStream), context.res)
+      : await context.res.body!.pipeTo(stream.writable).then(() => new Response(stream.readable, context.res))
 
-    c.res.headers.delete('Content-Length')
-    c.res.headers.set('Content-Encoding', enc)
+    context.res.headers.delete('Content-Length')
+    context.res.headers.set('Content-Encoding', matchedEncoding)
   }
 }

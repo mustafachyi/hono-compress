@@ -43,7 +43,9 @@
   "url": "https://github.com/vuolter/hono-compress",
   "scripts": {
     "update": "bun update --latest && npm install --force --no-fund --package-lock-only",
-    "build": "pkgroll --clean-dist --minify",
+    "build": "NODE_OPTIONS=--max-old-space-size=8192 pkgroll --clean-dist",
+    "build:minify": "NODE_OPTIONS=--max-old-space-size=8192 pkgroll --clean-dist --minify",
+    "build:watch": "pkgroll --clean-dist --watch",
     "test": "bun test",
     "format": "prettier . --write",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint --cache-strategy content --fix .",
@@ -51,35 +53,42 @@
     "lock": "bun install --silent && npm install --force --no-audit --no-fund --package-lock-only"
   },
   "peerDependencies": {
-    "hono": "^4.6.13"
+    "hono": "^4.8.12"
   },
   "dependencies": {
-    "@mongodb-js/zstd": "^2.0.0",
+    "@mongodb-js/zstd": "^2.0.1",
     "brotli-wasm": "^3.0.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.16.0",
-    "@types/bun": "^1.1.14",
-    "@types/eslint__js": "^8.42.3",
-    "@types/node": "^22.10.1",
-    "eslint": "^9.16.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-import-resolver-typescript": "^3.7.0",
-    "eslint-plugin-import-x": "^4.5.0",
+    "@eslint/js": "^9.32.0",
+    "@types/bun": "^1.2.19",
+    "@types/eslint__js": "^9.14.0",
+    "@types/node": "^24.1.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import-x": "^4.16.1",
     "eslint-plugin-markdown": "^5.1.0",
-    "eslint-plugin-perfectionist": "^4.2.0",
-    "eslint-plugin-regexp": "^2.7.0",
+    "eslint-plugin-perfectionist": "^4.15.0",
+    "eslint-plugin-regexp": "^2.9.1",
     "eslint-plugin-security": "^3.0.1",
-    "eslint-plugin-sonarjs": "^3.0.1",
+    "eslint-plugin-sonarjs": "^3.0.4",
     "eslint-plugin-tsdoc": "^0.4.0",
-    "eslint-plugin-unicorn": "^56.0.1",
-    "pkgroll": "^2.5.1",
-    "prettier": "^4.0.0-alpha.10",
-    "type-fest": "^4.30.0",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.17.0"
+    "eslint-plugin-unicorn": "^60.0.0",
+    "pkgroll": "^2.15.0",
+    "prettier": "^3.6.2",
+    "type-fest": "^4.41.0",
+    "typescript": "~5.8.0",
+    "typescript-eslint": "^8.38.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "^4.28.1"
-  }
+    "@rollup/rollup-darwin-arm64": "^4.46.2",
+    "@rollup/rollup-darwin-x64": "^4.46.2",
+    "@rollup/rollup-linux-x64-gnu": "^4.46.2",
+    "@rollup/rollup-win32-x64-msvc": "^4.46.2"
+  },
+  "trustedDependencies": [
+    "@mongodb-js/zstd",
+    "unrs-resolver"
+  ]
 }

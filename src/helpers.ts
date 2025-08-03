@@ -11,14 +11,14 @@ export const isCloudflareWorkers =
 export const isDenoDeploy =
   (globalThis as any).Deno?.env?.get('DENO_DEPLOYMENT_ID') !== undefined
 
-export function shouldCompress(res: Response, force: boolean) {
-  const type = res.headers.get('Content-Type')
-  return type ? COMPRESSIBLE_CONTENT_TYPE_REGEX.test(type) : force
+export function isCompressible(response: Response, forceCompression: boolean) {
+  const contentType = response.headers.get('Content-Type')
+  return contentType
+    ? COMPRESSIBLE_CONTENT_TYPE_REGEX.test(contentType)
+    : forceCompression
 }
 
-export function shouldTransform(res: Response) {
-  const cacheControl = res.headers.get('Cache-Control')
-  // Don't compress for Cache-Control: no-transform
-  // https://tools.ietf.org/html/rfc7234#section-5.2.2.4
+export function isTransformable(response: Response) {
+  const cacheControl = response.headers.get('Cache-Control')
   return !cacheControl || !CACHECONTROL_NOTRANSFORM_REGEXP.test(cacheControl)
 }

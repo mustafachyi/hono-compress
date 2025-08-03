@@ -1,4 +1,3 @@
-// https://developers.cloudflare.com/workers/runtime-apis/web-standards/#navigatoruseragent
 export const CLOUDFLARE_WORKERS_NAVIGATOR = 'Cloudflare-Workers'
 
 export const ACCEPTED_ENCODINGS = ['zstd', 'br', 'gzip', 'deflate'] as const

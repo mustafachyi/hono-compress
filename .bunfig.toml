@@ -1,0 +1,13 @@
+[install]
+auto = "force"
+exact = false
+production = false
+
+[install.scopes]
+"*" = { trusted = true }
+
+[install.cache]
+dir = "~/.bun/install/cache"
+
+[run]
+bun = true

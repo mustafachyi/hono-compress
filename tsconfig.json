@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    // Type Checking
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -8,8 +7,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "strict": true,
-
-    // Modules
     "allowImportingTsExtensions": true,
     "module": "preserve",
     "moduleResolution": "bundler",
@@ -18,34 +15,23 @@
       "~~/*": ["./*"]
     },
     "resolveJsonModule": true,
-
-    // Emit
     "noEmit": true,
     "removeComments": true,
-
-    // JavaScript Support
     "allowJs": false,
-
-    // Interop Constraints
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-
-    // Language and Environment
-    // "experimentalDecorators": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "dom"],
     "moduleDetection": "force",
     "target": "esnext",
     "useDefineForClassFields": true,
-
-    // Projects
     "composite": true,
-
-    // Completeness
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["bun"]
   },
-  "include": ["./**/*", "./src/**/*"]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
