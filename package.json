@@ -24,28 +24,24 @@
     "gzip",
     "deflate"
   ],
-  "exports": {
-    "import": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
-    },
-    "require": {
-      "types": "./dist/index.d.cts",
-      "default": "./dist/index.cjs"
-    }
-  },
-  "main": "./dist/index.cjs",
+  "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "url": "https://github.com/vuolter/hono-compress",
   "scripts": {
     "update": "bun update --latest && npm install --force --no-fund --package-lock-only",
-    "build": "pkgroll --clean-dist",
-    "build:minify": "pkgroll --clean-dist --minify",
-    "build:watch": "pkgroll --clean-dist --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "build:minify": "tsup src/index.ts --format cjs,esm --dts --clean --minify",
     "test": "bun test",
     "format": "prettier . --write",
     "lint": "eslint --cache --cache-location node_modules/.cache/eslint --cache-strategy content --fix .",
@@ -75,8 +71,8 @@
     "eslint-plugin-sonarjs": "^3.0.4",
     "eslint-plugin-tsdoc": "^0.4.0",
     "eslint-plugin-unicorn": "^60.0.0",
-    "pkgroll": "^2.15.0",
     "prettier": "^3.6.2",
+    "tsup": "^8.2.3",
     "type-fest": "^4.41.0",
     "typescript": "~5.8.0",
     "typescript-eslint": "^8.38.0"
