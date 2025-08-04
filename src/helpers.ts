@@ -9,7 +9,7 @@ export const isCloudflareWorkers =
   globalThis.navigator?.userAgent === CLOUDFLARE_WORKERS_NAVIGATOR
 
 export const isDenoDeploy =
-  (globalThis as any).Deno?.env?.get('DENO_DEPLOYMENT_ID') !== undefined
+  (globalThis as { Deno?: { env?: { get: (key: string) => string | undefined } } }).Deno?.env?.get('DENO_DEPLOYMENT_ID') !== undefined
 
 export function isCompressible(
   response: Response,

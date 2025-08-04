@@ -1,6 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono'
 
-import type { CompressionEncoding, CompressOptions } from '~/types'
+import type { CompressionEncoding, CompressionFilter, CompressOptions, NodeCompressionOptions } from '~/types'
 
 import {
   ACCEPTED_ENCODINGS,
@@ -51,8 +51,8 @@ function createCompressionStream(
   zstdLevel: number,
   brotliLevel: number,
   gzipLevel: number,
-  options: any,
-): { stream: any; isTransformStream: boolean } {
+  compressionOptions: NodeCompressionOptions,
+): { stream: null | ReadableWritablePair | TransformStream; isTransformStream: boolean } {
   if (encoding === 'zstd') {
     return { stream: new ZstdCompressionStream(zstdLevel), isTransformStream: true }
   }
@@ -62,7 +62,7 @@ function createCompressionStream(
   if (encoding === 'gzip' || encoding === 'deflate') {
     if (zlib) {
       return {
-        stream: new ZlibCompressionStream(encoding, { level: gzipLevel, ...options }),
+        stream: new ZlibCompressionStream(encoding, { level: gzipLevel, ...compressionOptions }),
         isTransformStream: false,
       }
     }
@@ -74,22 +74,26 @@ function createCompressionStream(
 function shouldSkipCompression(
   context: Context,
   threshold: number,
-  force: boolean,
-  filter: any,
-  compressibleTypes: string[],
+  forceCompression: boolean,
+  compressionFilter: CompressionFilter | undefined,
+  customCompressibleTypes: string[],
 ): boolean {
-  if (!context.res.body || context.req.method === 'HEAD') return true
-  if (context.res.headers.has('Content-Encoding')) return true
+  const response = context.res
+  const request = context.req
   
-  const contentLength = Number(context.res.headers.get('Content-Length'))
+  if (!response.body || request.method === 'HEAD') return true
+  if (response.headers.has('Content-Encoding')) return true
+  if (request.header('x-no-compression')) return true
+  
+  const contentLength = Number(response.headers.get('Content-Length'))
   if (contentLength > 0 && contentLength < threshold) return true
   
-  return (
-    !isCompressible(context.res, force, compressibleTypes) ||
-    !isTransformable(context.res) ||
-    !!context.req.header('x-no-compression') ||
-    (filter ? !filter(context) : isDenoDeploy || isCloudflareWorkers)
-  )
+  const isContentCompressible = isCompressible(response, forceCompression, customCompressibleTypes)
+  const isContentTransformable = isTransformable(response)
+  const passesCustomFilter = compressionFilter ? compressionFilter(context) : true
+  const isRuntimeSupported = !(isDenoDeploy || isCloudflareWorkers)
+  
+  return !isContentCompressible || !isContentTransformable || !passesCustomFilter || (!compressionFilter && !isRuntimeSupported)
 }
 
 export function compress({
@@ -100,7 +104,7 @@ export function compress({
   zstdLevel = ZSTD_DEFAULT_LEVEL,
   brotliLevel = BROTLI_DEFAULT_LEVEL,
   gzipLevel = GZIP_DEFAULT_LEVEL,
-  options = {},
+  options: compressionOptions = {},
   filter,
   compressibleTypes = [],
 }: CompressOptions = {}): MiddlewareHandler {
@@ -112,17 +116,17 @@ export function compress({
 
     if (shouldSkipCompression(context, threshold, force, filter, compressibleTypes)) return
 
-    const matchedEncoding =
+    const selectedEncoding =
       findMatchingEncoding(context, activeEncodings) ?? (force ? activeEncodings[0] : null)
 
-    if (!matchedEncoding) return
+    if (!selectedEncoding) return
 
     const { stream, isTransformStream } = createCompressionStream(
-      matchedEncoding,
+      selectedEncoding,
       zstdLevel,
       brotliLevel,
       gzipLevel,
-      options,
+      compressionOptions,
     )
 
     if (!stream) return
@@ -133,9 +137,9 @@ export function compress({
         : await context.res.body!.pipeTo(stream.writable).then(() => new Response(stream.readable, context.res))
 
       context.res.headers.delete('Content-Length')
-      context.res.headers.set('Content-Encoding', matchedEncoding)
+      context.res.headers.set('Content-Encoding', selectedEncoding)
     } catch (error) {
-      console.warn('Compression failed:', error)
+      console.warn('Compression failed for encoding:', selectedEncoding, 'Error:', error instanceof Error ? error.message : error)
       return
     }
   }

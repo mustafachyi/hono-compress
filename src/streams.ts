@@ -11,12 +11,8 @@ export class ZstdCompressionStream extends TransformStream<Uint8Array, Uint8Arra
   constructor(level?: number) {
     super({
       async transform(chunk, controller) {
-        try {
-          const compressedChunk = await zstd.compress(Buffer.from(chunk), level)
-          controller.enqueue(compressedChunk)
-        } catch (error) {
-          controller.error(error)
-        }
+        const compressedChunk = await zstd.compress(Buffer.from(chunk), level)
+        controller.enqueue(compressedChunk)
       },
     })
   }
@@ -27,8 +23,12 @@ export class BrotliCompressionStream {
   readonly writable: WritableStream
 
   constructor(_level?: number) {
-    const compressor = new (brotli as any).CompressStream()
+    if (!brotli) {
+      throw new Error('Brotli compression not available')
+    }
+    const compressor = new brotli.CompressStream()
     let controller: ReadableStreamDefaultController<Uint8Array>
+    const COMPRESSION_BUFFER_SIZE = 8192
     
     this.readable = new ReadableStream({
       start(c) {
@@ -39,22 +39,49 @@ export class BrotliCompressionStream {
     this.writable = new WritableStream({
       write(chunk: Uint8Array) {
         try {
-          const compressed = compressor.compress(
-            chunk,
-            (brotli as any).BrotliStreamResultCode.NeedsMoreInput,
+          let resultCode: number
+          let inputOffset = 0
+          
+          do {
+            const input = chunk.slice(inputOffset)
+            const result = compressor.compress(input, COMPRESSION_BUFFER_SIZE)
+            
+            if (result.buf && result.buf.length > 0) {
+              controller.enqueue(result.buf)
+            }
+            
+            resultCode = result.code
+            inputOffset += result.input_offset
+            
+          } while (
+            resultCode === brotli!.BrotliStreamResultCode.NeedsMoreOutput ||
+            (inputOffset < chunk.length && resultCode === brotli!.BrotliStreamResultCode.NeedsMoreInput)
           )
-          if (compressed) controller.enqueue(compressed)
+          
+          if (resultCode !== brotli!.BrotliStreamResultCode.NeedsMoreInput) {
+            throw new Error(`Brotli compression failed with code ${resultCode}`)
+          }
         } catch (error) {
           controller.error(error)
         }
       },
       close() {
         try {
-          const final = compressor.compress(
-            new Uint8Array(0),
-            (brotli as any).BrotliStreamResultCode.Finished,
-          )
-          if (final) controller.enqueue(final)
+          let resultCode: number
+          do {
+            const result = compressor.compress(undefined, COMPRESSION_BUFFER_SIZE)
+            
+            if (result.buf && result.buf.length > 0) {
+              controller.enqueue(result.buf)
+            }
+            
+            resultCode = result.code
+          } while (resultCode === brotli!.BrotliStreamResultCode.NeedsMoreOutput)
+          
+          if (resultCode !== brotli!.BrotliStreamResultCode.ResultSuccess) {
+            throw new Error(`Brotli compression flush failed with code ${resultCode}`)
+          }
+          
           controller.close()
         } catch (error) {
           controller.error(error)
@@ -111,20 +138,54 @@ export class ZlibCompressionStream {
     const zlibHandle = createZlibCompressHandle(encoding, options)
 
     this.readable = new ReadableStream({
-      async start(controller) {
-        for await (const chunk of zlibHandle) {
-          controller.enqueue(chunk)
-        }
-        controller.close()
+      start(controller) {
+        zlibHandle.on('data', (chunk: Buffer) => {
+          controller.enqueue(new Uint8Array(chunk))
+        })
+        
+        zlibHandle.on('end', () => {
+          controller.close()
+        })
+        
+        zlibHandle.on('error', (error: Error) => {
+          controller.error(error)
+        })
       },
     })
 
     this.writable = new WritableStream({
       write(chunk: Uint8Array) {
-        zlibHandle.write(Buffer.from(chunk))
+        return new Promise<void>((resolve, reject) => {
+          try {
+            const buffer = Buffer.from(chunk)
+            
+            if (!Buffer.isBuffer(buffer)) {
+              reject(new Error('Invalid data type for compression stream'))
+              return
+            }
+            
+            const success = zlibHandle.write(buffer)
+            if (success) {
+              resolve()
+            } else {
+              zlibHandle.once('drain', resolve)
+              zlibHandle.once('error', reject)
+            }
+          } catch (error) {
+            reject(new Error(`Compression stream error: ${error instanceof Error ? error.message : 'Unknown error'}`))
+          }
+        })
       },
       close() {
-        zlibHandle.end()
+        return new Promise<void>((resolve, reject) => {
+          try {
+            zlibHandle.end()
+            zlibHandle.once('finish', resolve)
+            zlibHandle.once('error', reject)
+          } catch (error) {
+            reject(new Error(`Compression end error: ${error instanceof Error ? error.message : 'Unknown error'}`))
+          }
+        })
       },
     })
   }
