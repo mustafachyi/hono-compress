@@ -1,0 +1,60 @@
+{
+  "name": "@mustafachyi/hono-compress",
+  "version": "0.0.1",
+  "description": "A simple, high-performance compression middleware for Hono. Built exclusively for Bun.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "bun run clean && bun build ./src/index.ts --outdir ./dist --target bun --external hono --sourcemap=external && tsc --emitDeclarationOnly --outDir ./dist",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run test && bun run build"
+  },
+  "keywords": [
+    "hono",
+    "middleware",
+    "compression",
+    "bun",
+    "brotli",
+    "gzip",
+    "zstd",
+    "deflate"
+  ],
+  "author": "mustafachyi",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mustafachyi/hono-compress.git"
+  },
+  "homepage": "https://github.com/mustafachyi/hono-compress#readme",
+  "peerDependencies": {
+    "hono": "^4.10.6"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "hono": "^4.10.6",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
