@@ -1,6 +1,6 @@
 {
   "name": "@mustafachyi/hono-compress",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A simple, high-performance compression middleware for Hono. Built exclusively for Bun.",
   "type": "module",
   "main": "./dist/index.js",
