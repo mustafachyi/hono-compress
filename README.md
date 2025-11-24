@@ -69,6 +69,10 @@ app.use(compress({
 }))
 ```
 
+## Credits
+
+This project was inspired by [hono-compress](https://github.com/vuolter/hono-compress).
+
 ## License
 
 GNU General Public License v3.0
